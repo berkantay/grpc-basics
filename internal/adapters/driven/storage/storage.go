@@ -119,3 +119,24 @@ func (s *Storage) UpdateUser(filter, update any) error {
 	return nil
 
 }
+
+func (s *Storage) RemoveUser(filter any) error {
+
+	_, err := s.Collection.DeleteOne(s.Context, filter)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (s *Storage) GetUserByFilter(filter any) error {
+
+	var info model.UserInfo
+
+	data := s.Collection.FindOne(s.Context, filter)
+
+	return data.Decode(&info)
+}
