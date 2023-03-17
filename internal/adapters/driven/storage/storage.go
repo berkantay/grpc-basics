@@ -15,12 +15,12 @@ const (
 )
 
 type UserRepository interface {
-	Connect(ctx context.Context) error
-	AddUser(userInfo *model.UserInfo) error
+	AddUser(T any) error
 	UpdateUser(filter, update any) error
 	RemoveUser(filter any) error
 	GetUserByFilter(T any) error
 	HealthCheck(ctx context.Context) error
+	GracefullShutdown() error
 }
 
 type Storage struct {
@@ -53,7 +53,7 @@ func WithContext(ctx context.Context) StorageOption {
 	}
 }
 
-func NewStorage(opts ...StorageOption) *Storage {
+func NewStorage(opts ...StorageOption) (*Storage, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), dbOperationTimeout)
 	defer cancel()
@@ -68,18 +68,13 @@ func NewStorage(opts ...StorageOption) *Storage {
 		opt(s)
 	}
 
-	return s
-}
-
-func (s *Storage) Connect(ctx context.Context) error {
-
 	uri := s.Host + ":" + strconv.Itoa(s.Port)
 
 	clientOptions := options.Client().ApplyURI(uri)
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	s.Client = client
 
@@ -87,7 +82,7 @@ func (s *Storage) Connect(ctx context.Context) error {
 
 	s.Collection = collection
 
-	return nil
+	return s, nil
 }
 
 func (s *Storage) HealthCheck(ctx context.Context) error {
@@ -98,9 +93,9 @@ func (s *Storage) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-func (s *Storage) AddUser(user *model.UserInfo) error {
+func (s *Storage) AddUser(T any) error {
 
-	_, err := s.Collection.InsertOne(s.Context, user)
+	_, err := s.Collection.InsertOne(s.Context, T)
 
 	if err != nil {
 		return err
@@ -140,4 +135,15 @@ func (s *Storage) GetUserByFilter(filter any) error {
 	data := s.Collection.FindOne(s.Context, filter)
 
 	return data.Decode(&info)
+}
+
+func (s *Storage) GracefullShutdown() error {
+
+	err := s.Client.Disconnect(s.Context)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/berkantay/user-management-service/internal/adapters/driven/storage"
 	"github.com/berkantay/user-management-service/internal/adapters/driving/grpcserver"
 	"github.com/berkantay/user-management-service/internal/application"
@@ -8,14 +10,17 @@ import (
 
 func main() {
 
-	database := storage.NewStorage()
+	database, err := storage.NewStorage()
 
-	server := grpcserver.NewServer("tcp", "localhost:8080")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	server.RegisterApiServer()
+	defer database.GracefullShutdown()
 
-	application := application.NewApplication(database, server)
+	application := application.NewApplication(database)
 
-	application.Listen()
+	server := grpcserver.NewServer(application)
 
+	server.Run()
 }
