@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/berkantay/user-management-service/internal/model"
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -16,11 +15,12 @@ const (
 )
 
 type UserRepository interface {
-	Connect(uri string) error
+	Connect(ctx context.Context) error
 	AddUser(userInfo *model.UserInfo) error
-	UpdateUser(userInfo *model.UserInfo) error
-	RemoveUser(id uuid.UUID) error
-	GetUserByCounter(country string) error
+	UpdateUser(filter, update any) error
+	RemoveUser(filter any) error
+	GetUserByFilter(T any) error
+	HealthCheck(ctx context.Context) error
 }
 
 type Storage struct {
@@ -55,7 +55,8 @@ func WithContext(ctx context.Context) StorageOption {
 
 func NewStorage(opts ...StorageOption) *Storage {
 
-	ctx, _ := context.WithTimeout(context.Background(), dbOperationTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), dbOperationTimeout)
+	defer cancel()
 
 	s := &Storage{
 		Host:    "mongodb://localhost",
