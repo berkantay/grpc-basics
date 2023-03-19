@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/berkantay/user-management-service/internal/adapters/driven/storage"
@@ -15,6 +16,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	database.HealthCheck(context.Background())
 
 	defer database.GracefullShutdown()
 

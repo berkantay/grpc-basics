@@ -5,12 +5,13 @@ import (
 	"fmt"
 
 	"github.com/berkantay/user-management-service/internal/adapters/driven/storage"
+	"github.com/berkantay/user-management-service/internal/model"
 )
 
 type ApplicationRepository interface {
-	AddUser(T any) error
-	UpdateUser(filter, update any) error
-	RemoveUser(filter any) error
+	AddUser(user *model.UserInfo) error
+	UpdateUser(filter string, update any) error
+	RemoveUser(userId string) error
 	GetUserByFilter(T any) error
 	DatabaseHealthCheck(ctx context.Context) error
 	Echo(ctx context.Context) error
@@ -28,9 +29,9 @@ func NewApplication(db storage.UserRepository) *Application {
 	}
 }
 
-func (app *Application) AddUser(T any) error {
+func (app *Application) AddUser(user *model.UserInfo) error {
 
-	err := app.db.AddUser(T)
+	err := app.db.AddUser(user)
 
 	if err != nil {
 		return err
@@ -40,7 +41,7 @@ func (app *Application) AddUser(T any) error {
 
 }
 
-func (app *Application) UpdateUser(filter, update any) error {
+func (app *Application) UpdateUser(filter string, update any) error {
 
 	err := app.db.UpdateUser(filter, update)
 
@@ -51,9 +52,9 @@ func (app *Application) UpdateUser(filter, update any) error {
 	return nil
 }
 
-func (app *Application) RemoveUser(filter any) error {
+func (app *Application) RemoveUser(userId string) error {
 
-	err := app.db.RemoveUser(filter)
+	err := app.db.RemoveUserById(userId)
 	if err != nil {
 		return err
 	}

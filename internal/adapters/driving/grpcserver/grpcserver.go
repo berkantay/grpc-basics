@@ -2,11 +2,15 @@ package grpcserver
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
+	"time"
 
 	pb "github.com/berkantay/user-management-service/internal/adapters/driving/proto"
 	"github.com/berkantay/user-management-service/internal/application"
+	"github.com/berkantay/user-management-service/internal/model"
+	"github.com/google/uuid"
 
 	"google.golang.org/grpc"
 )
@@ -40,40 +44,72 @@ func (s *Server) Run() {
 	pb.RegisterUserApiServer(grpcServer, userManagementService)
 
 	grpcServer.Serve(listen)
+	defer grpcServer.Stop()
 
 }
 
-// func (s *Server) Close() error {
+func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.UserResponse, error) {
 
-// }
-func (s *Server) Echo(ctx context.Context, req *pb.ResponseRequest) (*pb.ResponseRequest, error) {
+	wrappedMessage := toUser(req)
 
-	return req, nil
+	err := s.app.AddUser(wrappedMessage)
+
+	if err != nil {
+		return &pb.UserResponse{
+			ReturnCode: 404,
+		}, err
+	}
+
+	return &pb.UserResponse{
+		ReturnCode: 200,
+	}, nil
 }
 
-// func NewServer(connType, uri string) *Server {
+func (s *Server) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest) (*pb.UserResponse, error) {
 
-// 	listener, err := net.Listen(connType, uri)
+	fmt.Println("Deleting user", req.Id)
 
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}
+	err := s.app.RemoveUser(req.Id)
 
-// 	grpcServer := grpc.NewServer()
+	if err != nil {
+		return &pb.UserResponse{
+			ReturnCode: 404,
+		}, err
+	}
 
-// 	userApi := &User{}
+	return &pb.UserResponse{
+		ReturnCode: 200,
+	}, nil
+}
 
-// 	pb.RegisterUserApiServer(grpcServer, userApi)
+func (s *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UserResponse, error) {
+	fmt.Println("Updating user", req.Id)
 
-// 	err = grpcServer.Serve(listener)
+	err := s.app.UpdateUser(req.Id, req.Update)
 
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
+	if err != nil {
+		return &pb.UserResponse{
+			ReturnCode: 404,
+		}, err
+	}
 
-// 	return &Server{
-// 		serverInstance: grpcServer,
-// 		userApi:        userApi,
-// 	}
+	return &pb.UserResponse{
+		ReturnCode: 200,
+	}, nil
 
-// }
+}
+
+func toUser(req *pb.CreateUserRequest) *model.UserInfo { //TODO:move this wrapping layer from server logic
+
+	return &model.UserInfo{
+		UUID:      uuid.New().String(),
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		NickName:  req.NickName,
+		Password:  req.Password,
+		Email:     req.Email,
+		Country:   req.Country,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+}
