@@ -5,28 +5,32 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 
 	pb "github.com/berkantay/user-management-service/internal/adapters/driving/proto"
-	"github.com/berkantay/user-management-service/internal/application"
 	"github.com/berkantay/user-management-service/internal/model"
-	"github.com/google/uuid"
 
 	"google.golang.org/grpc"
 )
 
-type ServerRepository interface {
+type UserService interface {
+	CreateUser(user *model.User) error
+	UpdateUser(user *model.User) error
+	RemoveUser(userId string) error
+	QueryUsers(query *model.UserQuery) ([]model.User, error)
+	DatabaseHealthCheck(ctx context.Context) error
+	Echo(ctx context.Context) error
+	GracefullShutdown() error
 }
 
 type Server struct {
-	app application.ApplicationRepository
+	service UserService
 	pb.UnimplementedUserApiServer
 }
 
-func NewServer(app application.ApplicationRepository) *Server {
+func NewServer(service UserService) *Server {
 
 	return &Server{
-		app: app,
+		service: service,
 	}
 }
 
@@ -48,68 +52,166 @@ func (s *Server) Run() {
 
 }
 
-func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.UserResponse, error) {
+func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	wrappedMessage := createUserRequestToUser(req)
 
-	wrappedMessage := toUser(req)
-
-	err := s.app.AddUser(wrappedMessage)
+	err := s.service.CreateUser(wrappedMessage)
 
 	if err != nil {
-		return &pb.UserResponse{
-			ReturnCode: 404,
+		return &pb.CreateUserResponse{
+			Status: &pb.Status{
+				Code:    "INTERNAL",
+				Message: "Could not create user.",
+			},
 		}, err
 	}
 
-	return &pb.UserResponse{
-		ReturnCode: 200,
+	return &pb.CreateUserResponse{
+		Status: &pb.Status{
+			Code:    "OK",
+			Message: "User created.",
+		}, //TODO Fill user info from db
 	}, nil
 }
 
-func (s *Server) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest) (*pb.UserResponse, error) {
+func (s *Server) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
 
 	fmt.Println("Deleting user", req.Id)
 
-	err := s.app.RemoveUser(req.Id)
+	err := s.service.RemoveUser(req.Id)
 
 	if err != nil {
-		return &pb.UserResponse{
-			ReturnCode: 404,
+		return &pb.DeleteUserResponse{
+			Status: &pb.Status{
+				Code:    "INTERNAL",
+				Message: "Could not delete user.",
+			},
 		}, err
 	}
 
-	return &pb.UserResponse{
-		ReturnCode: 200,
+	return &pb.DeleteUserResponse{
+		Status: &pb.Status{
+			Code:    "OK",
+			Message: "User deleted.",
+		}, //TODO Fill user info from db
 	}, nil
 }
 
-func (s *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UserResponse, error) {
+func (s *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
 	fmt.Println("Updating user", req.Id)
 
-	err := s.app.UpdateUser(req.Id, req.Update)
+	err := s.service.UpdateUser(updateUserRequestToUser(req))
 
 	if err != nil {
-		return &pb.UserResponse{
-			ReturnCode: 404,
+		return &pb.UpdateUserResponse{
+			Status: &pb.Status{
+				Code:    "INTERNAL",
+				Message: "Could not update user.",
+			},
 		}, err
 	}
 
-	return &pb.UserResponse{
-		ReturnCode: 200,
+	return &pb.UpdateUserResponse{
+		Status: &pb.Status{
+			Code:    "OK",
+			Message: "User updated.",
+		}, //TODO Fill user info from db
 	}, nil
 
 }
 
-func toUser(req *pb.CreateUserRequest) *model.UserInfo { //TODO:move this wrapping layer from server logic
+func (s *Server) QueryUsers(ctx context.Context, req *pb.QueryUsersRequest) (*pb.QueryUsersResponse, error) {
 
-	return &model.UserInfo{
-		UUID:      uuid.New().String(),
+	userQuery := toUserQuery(req)
+
+	user, err := s.service.QueryUsers(userQuery)
+
+	if err != nil {
+		return &pb.QueryUsersResponse{
+			Status: &pb.Status{
+				Code:    "INTERNAL",
+				Message: "Internal error occured",
+			},
+		}, err
+	}
+
+	if user == nil {
+		return &pb.QueryUsersResponse{
+			Status: &pb.Status{
+				Code:    "NOT_FOUND",
+				Message: "Could not found any user.",
+			},
+		}, err
+	}
+
+	return toPbQueryResponse(user), nil
+
+}
+
+func createUserRequestToUser(req *pb.CreateUserRequest) *model.User { //TODO:move this wrapping layer from server logic
+
+	return &model.User{
+
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		NickName:  req.NickName,
 		Password:  req.Password,
 		Email:     req.Email,
 		Country:   req.Country,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
 	}
+}
+
+func updateUserRequestToUser(req *pb.UpdateUserRequest) *model.User { //TODO:move this wrapping layer from server logic
+
+	return &model.User{
+		ID:        req.Id,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		NickName:  req.NickName,
+		Password:  req.Password,
+		Email:     req.Email,
+		Country:   req.Country,
+	}
+}
+
+func toUserQuery(req *pb.QueryUsersRequest) *model.UserQuery {
+
+	return &model.UserQuery{
+		ID:        req.Id,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		NickName:  req.NickName,
+		Email:     req.Email,
+		Country:   req.Country,
+	}
+
+}
+
+func toPbQueryResponse(users []model.User) *pb.QueryUsersResponse {
+
+	payload := make([]*pb.UserPayload, 0)
+
+	for _, u := range users {
+
+		payload = append(payload, &pb.UserPayload{
+
+			Id:        u.ID,
+			FirstName: u.FirstName,
+			LastName:  u.LastName,
+			NickName:  u.NickName,
+			Password:  u.Password,
+			Email:     u.Email,
+			Country:   u.Country,
+		})
+
+	}
+
+	return &pb.QueryUsersResponse{
+		Status: &pb.Status{
+			Code:    "OK",
+			Message: "Users queried",
+		},
+		Payload: payload,
+	}
+
 }

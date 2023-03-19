@@ -7,16 +7,26 @@ option go_package = "./";
 
 service UserApi {
     // rpc Heartbeat(BeatsPerMinuteRequest) returns (stream BeatsPerMinuteResponse){};
-    rpc CreateUser(CreateUserRequest) returns (UserResponse) {}
-    rpc DeleteUser(DeleteUserRequest) returns (UserResponse) {}
-    rpc UpdateUser(UpdateUserRequest) returns (UserResponse) {}
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+    rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {}
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+    rpc QueryUsers(QueryUsersRequest) returns (QueryUsersResponse) {}
    
     // rpc GetUser(UserRequest) returns (UserResponse) {}
 
 }
 
+message Status{
+    string code =1;
+    string message = 2;
+}
+
 message DeleteUserRequest{
     string id = 1;
+
+}
+message DeleteUserResponse{
+    Status status = 1;
 }
 
 message CreateUserRequest{
@@ -28,15 +38,54 @@ message CreateUserRequest{
     string country = 6;
 }
 
+message UserPayload{
+    string id =1;
+    string first_name = 2;
+    string last_name = 3;
+    string nick_name = 4;
+    string password = 5;
+    string email = 6;
+    string country = 7;
+}
+
+message CreateUserResponse{
+    Status status = 1;
+    UserPayload payload =2;
+}
 
 message UpdateUserRequest{
     string id =1;
-    CreateUserRequest update = 2;
-
+    string first_name = 2;
+    string last_name = 3;
+    string nick_name = 4;
+    string password = 5;
+    string email = 6;
+    string country = 7;
 
 }
 
-message UserResponse{
-    int32 return_code = 1;
+message UpdateUserResponse{
+    Status status = 1;
+    UserPayload payload =2;
 }
+
+
+message QueryUsersRequest{
+    string id =1;
+    string first_name = 2;
+    string last_name = 3;
+    string nick_name = 4;
+    string email = 5;
+    string country = 6;
+
+}
+
+message QueryUsersResponse{
+    Status status = 1;
+    repeated UserPayload payload =2;
+}
+
+
+
+
 

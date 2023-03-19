@@ -6,7 +6,7 @@ import (
 
 	"github.com/berkantay/user-management-service/internal/adapters/driven/storage"
 	"github.com/berkantay/user-management-service/internal/adapters/driving/grpcserver"
-	"github.com/berkantay/user-management-service/internal/application"
+	"github.com/berkantay/user-management-service/internal/user"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 
 	defer database.GracefullShutdown()
 
-	application := application.NewApplication(database)
+	application := user.NewService(database)
 
 	server := grpcserver.NewServer(application)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -16,15 +17,6 @@ import (
 const (
 	dbOperationTimeout = 10 * time.Second
 )
-
-type UserRepository interface {
-	AddUser(T any) error
-	UpdateUser(filter string, update any) error
-	RemoveUserById(filter any) error
-	GetUserByFilter(T any) error
-	HealthCheck(ctx context.Context) error
-	GracefullShutdown() error
-}
 
 type Storage struct {
 	Host       string
@@ -92,20 +84,18 @@ func NewStorage(opts ...StorageOption) (*Storage, error) {
 }
 
 func (s *Storage) HealthCheck(ctx context.Context) error {
-
 	err := s.Client.Ping(ctx, nil)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-
 	fmt.Println("Connection 200")
 	return nil
 }
 
-func (s *Storage) AddUser(T any) error {
+func (s *Storage) CreateUser(user *model.User) error {
 	//TODO: user id could be checked whether if exists or not. If exists generate another uuid to keep uniqueness.
-	_, err := s.Collection.InsertOne(context.Background(), T)
+	_, err := s.Collection.InsertOne(context.Background(), user)
 	if err != nil {
 		return err
 	}
@@ -113,18 +103,11 @@ func (s *Storage) AddUser(T any) error {
 	return nil
 }
 
-func (s *Storage) UpdateUser(filter string, update any) error {
-
-	filterID := schemeIDFilter(filter)
-
-	bsonUpdate, err := toUserBson(update)
-
-	if err != nil {
-		return err
-	}
+func (s *Storage) UpdateUser(user *model.User) error {
+	filterID := schemeIDFilter(user.ID)
 
 	updateDocument := bson.M{
-		"$set": bsonUpdate,
+		"$set": toUserBson(user),
 	}
 
 	result := s.Collection.FindOneAndUpdate(context.Background(), filterID, updateDocument)
@@ -160,13 +143,38 @@ func (s *Storage) RemoveUserById(filter any) error {
 
 }
 
-func (s *Storage) GetUserByFilter(filter any) error {
+func (s *Storage) QueryUsers(filter *model.UserQuery, numberOfEntry, pageNumber int) ([]model.User, error) {
 
-	var info model.UserInfo
+	var users []model.User
 
-	data := s.Collection.FindOne(context.Background(), filter)
+	// limit := int64(numberOfEntry)
+	// skip := int64(pageNumber)*limit - limit
 
-	return data.Decode(&info)
+	queryFilter := filterBuilder(filter)
+
+	fmt.Println("Query filter is", queryFilter)
+
+	cur, err := s.Collection.Find(context.Background(), queryFilter)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for cur.Next(context.Background()) {
+		var user model.User
+
+		if err := cur.Decode(&user); err != nil {
+			log.Println(err)
+		}
+
+		users = append(users, user)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (s *Storage) GracefullShutdown() error {
@@ -180,26 +188,41 @@ func (s *Storage) GracefullShutdown() error {
 	return nil
 }
 
+func filterBuilder(filter *model.UserQuery) *bson.M {
+
+	f := bson.M{}
+
+	if filter.FirstName != "" {
+		f["first_name"] = filter.FirstName
+	}
+	if filter.LastName != "" {
+		f["last_name"] = filter.LastName
+	}
+	if filter.NickName != "" {
+		f["nickname"] = filter.NickName
+	}
+	if filter.Country != "" {
+		f["country"] = filter.Country
+	}
+
+	// return &bson.D{{Key: "first_name", Value: filter.FirstName}}
+
+	return &f
+}
+
 func schemeIDFilter(filter any) *bson.D {
 
 	return &bson.D{{Key: "_id", Value: filter}}
 }
 
-func toUserBson(update any) (*bson.D, error) {
+func toUserBson(user *model.User) *bson.D {
 
-	updateDoc := &bson.D{}
-
-	data, err := bson.Marshal(update)
-	if err != nil {
-		return nil, err
+	return &bson.D{
+		bson.E{Key: "first_name", Value: user.FirstName},
+		bson.E{Key: "last_name", Value: user.LastName},
+		bson.E{Key: "nickname", Value: user.NickName},
+		bson.E{Key: "password", Value: user.Password},
+		bson.E{Key: "email", Value: user.Email},
+		bson.E{Key: "country", Value: user.Country},
 	}
-
-	err = bson.Unmarshal(data, &updateDoc)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return updateDoc, nil
-
 }
