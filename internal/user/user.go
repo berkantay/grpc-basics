@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/berkantay/user-management-service/internal/model"
+	"github.com/berkantay/user-management-service/pkg/encryption"
 	"github.com/google/uuid"
 )
 
@@ -35,7 +36,13 @@ func (app *Service) CreateUser(user *model.User) error {
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
 
-	err := app.db.CreateUser(user)
+	hashed, err := encryption.HashPassword(user.Password)
+	if err != nil {
+		return err
+	}
+	user.Password = hashed
+
+	err = app.db.CreateUser(user)
 
 	if err != nil {
 		return err

@@ -2,12 +2,16 @@ package grpcserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
 
 	pb "github.com/berkantay/user-management-service/internal/adapters/driving/proto"
 	"github.com/berkantay/user-management-service/internal/model"
+	"github.com/berkantay/user-management-service/pkg/utility"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	"google.golang.org/grpc"
 )
@@ -51,6 +55,18 @@ func (s *Server) Run() {
 
 func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 	wrappedMessage := createUserRequestToUser(req)
+
+	isValidEmail := utility.CheckIsValidMail(req.Email)
+
+	if !isValidEmail {
+
+		return &pb.CreateUserResponse{
+			Status: &pb.Status{
+				Code:    "INVALID_ARGUMENT",
+				Message: "Invalid email.",
+			},
+		}, errors.New("invalid email")
+	}
 
 	err := s.service.CreateUser(wrappedMessage)
 
@@ -148,9 +164,8 @@ func (s *Server) QueryUsers(ctx context.Context, req *pb.QueryUsersRequest) (*pb
 func createUserRequestToUser(req *pb.CreateUserRequest) *model.User { //TODO:move this wrapping layer from server logic
 
 	return &model.User{
-
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
+		FirstName: cases.Title(language.English, cases.Compact).String(req.FirstName),
+		LastName:  cases.Title(language.English, cases.Compact).String(req.LastName),
 		NickName:  req.NickName,
 		Password:  req.Password,
 		Email:     req.Email,
@@ -161,8 +176,8 @@ func createUserRequestToUser(req *pb.CreateUserRequest) *model.User { //TODO:mov
 func updateUserRequestToUser(req *pb.UpdateUserRequest) *model.User { //TODO:move this wrapping layer from server logic
 	return &model.User{
 		ID:        req.Id,
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
+		FirstName: cases.Title(language.English, cases.Compact).String(req.FirstName),
+		LastName:  cases.Title(language.English, cases.Compact).String(req.LastName),
 		NickName:  req.NickName,
 		Password:  req.Password,
 		Email:     req.Email,
