@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
 	"github.com/berkantay/user-management-service/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -143,38 +143,30 @@ func (s *Storage) RemoveUserById(filter any) error {
 
 }
 
-func (s *Storage) QueryUsers(filter *model.UserQuery, numberOfEntry, pageNumber int) ([]model.User, error) {
+func (s *Storage) QueryUsers(filter *model.UserQuery) ([]model.User, error) {
 
-	var users []model.User
-
-	// limit := int64(numberOfEntry)
-	// skip := int64(pageNumber)*limit - limit
+	limit := int64(*filter.Size)
+	// skip := int64(*filter.Page)*limit - limit
 
 	queryFilter := filterBuilder(filter)
 
 	fmt.Println("Query filter is", queryFilter)
 
-	cur, err := s.Collection.Find(context.Background(), queryFilter)
+	pipeline := createPipeline(queryFilter, limit)
+
+	cur, err := s.Collection.Aggregate(context.Background(), pipeline)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for cur.Next(context.Background()) {
-		var user model.User
-
-		if err := cur.Decode(&user); err != nil {
-			log.Println(err)
-		}
-
-		users = append(users, user)
+	var results []bson.M
+	if err = cur.All(context.TODO(), &results); err != nil {
+		panic(err)
 	}
 
-	if err != nil {
-		return nil, err
-	}
+	return fromBsonToUser(results)
 
-	return users, nil
 }
 
 func (s *Storage) GracefullShutdown() error {
@@ -188,24 +180,37 @@ func (s *Storage) GracefullShutdown() error {
 	return nil
 }
 
-func filterBuilder(filter *model.UserQuery) *bson.M {
+func createPipeline(filter *bson.D, limit int64) []bson.M {
+	pipeline := []bson.M{
+		{"$match": *filter},
+		{"$facet": bson.M{
+			"metadata": []bson.M{
+				{"$count": "total"},
+			},
+			"data": []bson.M{
+				{"$limit": limit},
+			},
+		}},
+	}
+	return pipeline
+}
 
-	f := bson.M{}
+func filterBuilder(filter *model.UserQuery) *bson.D {
 
-	if filter.FirstName != "" {
-		f["first_name"] = filter.FirstName
-	}
-	if filter.LastName != "" {
-		f["last_name"] = filter.LastName
-	}
-	if filter.NickName != "" {
-		f["nickname"] = filter.NickName
-	}
-	if filter.Country != "" {
-		f["country"] = filter.Country
-	}
+	f := bson.D{}
 
-	// return &bson.D{{Key: "first_name", Value: filter.FirstName}}
+	if filter.FirstName != nil {
+		f = append(f, bson.E{Key: "first_name", Value: *filter.FirstName})
+	}
+	if filter.LastName != nil {
+		f = append(f, bson.E{Key: "last_name", Value: *filter.LastName})
+	}
+	if filter.NickName != nil {
+		f = append(f, bson.E{Key: "nickname", Value: *filter.NickName})
+	}
+	if filter.Country != nil {
+		f = append(f, bson.E{Key: "country", Value: *filter.Country})
+	}
 
 	return &f
 }
@@ -225,4 +230,29 @@ func toUserBson(user *model.User) *bson.D {
 		bson.E{Key: "email", Value: user.Email},
 		bson.E{Key: "country", Value: user.Country},
 	}
+}
+
+func fromBsonToUser(queriedUser []primitive.M) ([]model.User, error) {
+
+	var result []model.User
+
+	for _, q := range queriedUser {
+		for _, d := range q["data"].(primitive.A) {
+
+			result = append(result, model.User{
+				ID:        d.(primitive.M)["_id"].(string),
+				FirstName: d.(primitive.M)["first_name"].(string),
+				LastName:  d.(primitive.M)["last_name"].(string),
+				NickName:  d.(primitive.M)["nickname"].(string),
+				Password:  d.(primitive.M)["password"].(string),
+				Email:     d.(primitive.M)["email"].(string),
+				Country:   d.(primitive.M)["country"].(string),
+				CreatedAt: d.(primitive.M)["created_at"].(primitive.DateTime).Time(),
+				UpdatedAt: d.(primitive.M)["updated_at"].(primitive.DateTime).Time(),
+			})
+
+		}
+	}
+
+	return result, nil
 }

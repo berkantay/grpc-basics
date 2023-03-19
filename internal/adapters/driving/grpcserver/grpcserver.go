@@ -17,9 +17,6 @@ type UserService interface {
 	UpdateUser(user *model.User) error
 	RemoveUser(userId string) error
 	QueryUsers(query *model.UserQuery) ([]model.User, error)
-	DatabaseHealthCheck(ctx context.Context) error
-	Echo(ctx context.Context) error
-	GracefullShutdown() error
 }
 
 type Server struct {
@@ -144,7 +141,7 @@ func (s *Server) QueryUsers(ctx context.Context, req *pb.QueryUsersRequest) (*pb
 		}, err
 	}
 
-	return toPbQueryResponse(user), nil
+	return toPbQueryResponse(user, req), nil
 
 }
 
@@ -162,7 +159,6 @@ func createUserRequestToUser(req *pb.CreateUserRequest) *model.User { //TODO:mov
 }
 
 func updateUserRequestToUser(req *pb.UpdateUserRequest) *model.User { //TODO:move this wrapping layer from server logic
-
 	return &model.User{
 		ID:        req.Id,
 		FirstName: req.FirstName,
@@ -175,6 +171,16 @@ func updateUserRequestToUser(req *pb.UpdateUserRequest) *model.User { //TODO:mov
 }
 
 func toUserQuery(req *pb.QueryUsersRequest) *model.UserQuery {
+	defaultPage := int64(1)
+	defaultSize := int64(10)
+
+	if req.Page == nil {
+		req.Page = &defaultPage
+	}
+
+	if req.Size == nil {
+		req.Size = &defaultSize
+	}
 
 	return &model.UserQuery{
 		ID:        req.Id,
@@ -183,18 +189,15 @@ func toUserQuery(req *pb.QueryUsersRequest) *model.UserQuery {
 		NickName:  req.NickName,
 		Email:     req.Email,
 		Country:   req.Country,
+		Page:      req.Page,
+		Size:      req.Size,
 	}
-
 }
 
-func toPbQueryResponse(users []model.User) *pb.QueryUsersResponse {
-
+func toPbQueryResponse(users []model.User, req *pb.QueryUsersRequest) *pb.QueryUsersResponse {
 	payload := make([]*pb.UserPayload, 0)
-
 	for _, u := range users {
-
 		payload = append(payload, &pb.UserPayload{
-
 			Id:        u.ID,
 			FirstName: u.FirstName,
 			LastName:  u.LastName,
@@ -203,7 +206,6 @@ func toPbQueryResponse(users []model.User) *pb.QueryUsersResponse {
 			Email:     u.Email,
 			Country:   u.Country,
 		})
-
 	}
 
 	return &pb.QueryUsersResponse{
@@ -212,6 +214,9 @@ func toPbQueryResponse(users []model.User) *pb.QueryUsersResponse {
 			Message: "Users queried",
 		},
 		Payload: payload,
+		Meta: &pb.Meta{
+			Page: *req.Page,
+			Size: *req.Size,
+		},
 	}
-
 }

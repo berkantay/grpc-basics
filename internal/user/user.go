@@ -13,7 +13,7 @@ type UserRepository interface {
 	CreateUser(user *model.User) error
 	UpdateUser(user *model.User) error
 	RemoveUserById(filter any) error
-	QueryUsers(filter *model.UserQuery, numberOfEntry, pageNumber int) ([]model.User, error)
+	QueryUsers(filter *model.UserQuery) ([]model.User, error)
 	HealthCheck(ctx context.Context) error
 	GracefullShutdown() error
 }
@@ -68,11 +68,13 @@ func (app *Service) RemoveUser(userId string) error {
 
 func (app *Service) QueryUsers(query *model.UserQuery) ([]model.User, error) {
 
-	users, err := app.db.QueryUsers(query, 2, 2)
+	users, err := app.db.QueryUsers(query)
 
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println(users)
 
 	return users, nil
 }

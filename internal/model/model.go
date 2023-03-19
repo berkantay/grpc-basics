@@ -17,12 +17,14 @@ type User struct {
 }
 
 type UserQuery struct {
-	ID        string `bson:"_id,omitempty"`
-	FirstName string `bson:"first_name" json:"first_name"`
-	LastName  string `bson:"last_name" json:"last_name"`
-	NickName  string `bson:"nickname" json:"nickname"`
-	Email     string `bson:"email" json:"email"`
-	Country   string `bson:"country" json:"country"`
+	ID        *string `bson:"_id,omitempty"`
+	FirstName *string `bson:"first_name" json:"first_name"`
+	LastName  *string `bson:"last_name" json:"last_name"`
+	NickName  *string `bson:"nickname" json:"nickname"`
+	Email     *string `bson:"email" json:"email"`
+	Country   *string `bson:"country" json:"country"`
+	Page      *int64  `bson:"page" json:"page"`
+	Size      *int64  `bson:"size" json:"size"`
 }
 
 type UserPage struct {
