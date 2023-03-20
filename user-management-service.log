@@ -1,0 +1,111 @@
+User Management Server Log | 2023/03/20 14:44:29 MongoDB|Connecting..
+User Management Server Log | 2023/03/20 14:44:29 MongoDB|Connected..
+User Management Server Log | 2023/03/20 14:44:29 MongoDB|Creating collection..
+User Management Server Log | 2023/03/20 14:44:29 MongoDB|Created collection..
+User Management Server Log | 2023/03/20 14:44:29 MongoDB|Database alive..
+User Management Server Log | 2023/03/20 14:44:29 gRPC|Connecting tcp socket..
+User Management Server Log | 2023/03/20 14:44:29 gRPC|Registering to User API
+User Management Server Log | 2023/03/20 14:44:29 gRPC|Registered to User API
+User Management Server Log | 2023/03/20 14:44:29 gRPC|Binding TCP Socket
+User Management Server Log | 2023/03/20 14:44:32 gRPC|Request converted to user model[&{ Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:44:32 Email is [true]
+User Management Server Log | 2023/03/20 14:44:32 Create called with[{ Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:44:32 Wrapped to[{195f7686-76eb-4c9d-bd5a-1de7f4c097d1 Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 2023-03-20 14:44:32.616092 +0300 +03 m=+3.017740959 2023-03-20 14:44:32.616092 +0300 +03 m=+3.017741042}]
+User Management Server Log | 2023/03/20 14:44:33 MongoDB|Inserting user [&{195f7686-76eb-4c9d-bd5a-1de7f4c097d1 Cagatay Ay excalibur $2a$14$X8Oe9qJ9bYLDio52hWZBJuDeXQhrF3XqBhN/fHjHrxMtn6CaE75Ye berkantay.5@gmail.com zimbambwe 2023-03-20 14:44:32.616092 +0300 +03 m=+3.017740959 2023-03-20 14:44:32.616092 +0300 +03 m=+3.017741042}]
+User Management Server Log | 2023/03/20 14:44:33 MongoDB|Insertion succesfull [195f7686-76eb-4c9d-bd5a-1de7f4c097d1]
+User Management Server Log | 2023/03/20 14:44:33 User created with id[195f7686-76eb-4c9d-bd5a-1de7f4c097d1]
+User Management Server Log | 2023/03/20 14:44:33 gRPC|Query called
+User Management Server Log | 2023/03/20 14:44:33 Query called for
+User Management Server Log | 2023/03/20 14:44:43 gRPC|Request converted to user model[&{ Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:44:43 Email is [true]
+User Management Server Log | 2023/03/20 14:44:43 Create called with[{ Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:44:43 Wrapped to[{6511d72b-caf6-4964-8072-f165bbc88d83 Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 2023-03-20 14:44:43.144154 +0300 +03 m=+13.545696834 2023-03-20 14:44:43.144155 +0300 +03 m=+13.545696959}]
+User Management Server Log | 2023/03/20 14:44:44 MongoDB|Inserting user [&{6511d72b-caf6-4964-8072-f165bbc88d83 Cagatay Ay excalibur $2a$14$Hk7G9CVuWSgiNBZ1EfBr4.5TRMdCJ3NfeFWOBEpZAUQiKQPrf2B4S berkantay.5@gmail.com zimbambwe 2023-03-20 14:44:43.144154 +0300 +03 m=+13.545696834 2023-03-20 14:44:43.144155 +0300 +03 m=+13.545696959}]
+User Management Server Log | 2023/03/20 14:44:44 MongoDB|Insertion succesfull [6511d72b-caf6-4964-8072-f165bbc88d83]
+User Management Server Log | 2023/03/20 14:44:44 User created with id[6511d72b-caf6-4964-8072-f165bbc88d83]
+User Management Server Log | 2023/03/20 14:44:44 gRPC|Query called
+User Management Server Log | 2023/03/20 14:44:44 Query called for
+User Management Server Log | 2023/03/20 14:44:44 gRPC|Updating user with [id:"3b63ee53-50ce-4691-a170-1d73db6756c8"  first_name:"cagatay"  last_name:"yucelen"]
+User Management Server Log | 2023/03/20 14:44:44 Update called with[{3b63ee53-50ce-4691-a170-1d73db6756c8 Cagatay Yucelen     0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:44:44 MongoDB|Updating user [&{3b63ee53-50ce-4691-a170-1d73db6756c8 Cagatay Yucelen     0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:44:44 MongoDB|Filter = [&[{_id 3b63ee53-50ce-4691-a170-1d73db6756c8}]]
+User Management Server Log | 2023/03/20 14:44:44 MongoDB|Updated user [&{<nil> %!s(*mongo.Cursor=<nil>)  %!s(*bsoncodec.Registry=&{map[0x10348b1e0:0x14000108720 0x10349bc00:0x1400003a2aa 0x10349ed40:0x1400003a2a5 0x1034a1760:0x102e75fd0 0x1034a8ba0:0x102e756e0 0x1034a8be0:0x102e75790 0x1034a9620:0x102e76080 0x1034a96e0:0x102e76080 0x1034aa020:0x1400003a2ab 0x1034cbd00:0x1400003a2a6 0x1034cf940:0x14000108720 0x1034d8c60:0x1400003a2aa 0x1034e1a00:0x102e759a0 0x1034e1a60:0x102e75dc0 0x1034e1ac0:0x102e75d10 0x1034e1b20:0x102e75a50 0x1034e1b80:0x102e758f0 0x1034ecec0:0x1400003a2a7 0x1034f1080:0x102e75580 0x1035201a0:0x102e75f20 0x103528a40:0x103a166f0 0x10352f620:0x102e75840 0x10352f6e0:0x102e75c60 0x10353f980:0x102e75340 0x1035428c0:0x102e75bb0 0x103542980:0x102e75b00 0x10354b100:0x102e7cab0 0x103550860:0x102e75e70 0x103560920:0x102e754d0 0x10356e2a0:0x1400004a100 0x1035780e0:0x102e75630 0x103597980:0x1400003a2ac 0x103598ea0:0x102e7ca00] map[0x10349ed40:0x1400003a2a5 0x1034a1760:{0x102e74b60 0x102e74c50} 0x1034a8ba0:{0x102e73a80 0x102e73b70} 0x1034a8be0:{0x102e73c60 0x102e73d50} 0x1034a96a0:{0x102e715f0 0x102e716e0} 0x1034aa020:0x1400003a2ab 0x1034bf0c0:0x1400003a2aa 0x1034cbd00:0x1400003a2a6 0x1034d8c60:0x102e719b0 0x1034e1a00:{0x102e72d60 0x102e72e50} 0x1034e1a60:{0x102e738a0 0x102e73990} 0x1034e1ac0:{0x102e736c0 0x102e737b0} 0x1034e1b20:{0x102e72f40 0x102e73030} 0x1034e1b80:{0x102e72b80 0x102e72c70} 0x1034ecec0:0x1400003a2a7 0x1034f1080:{0x102e744d0 0x102e745c0} 0x103510fa0:0x1400004a180 0x1035201a0:{0x102e74980 0x102e74a70} 0x103528a40:0x103a166f0 0x10352f620:{0x102e72360 0x102e72450} 0x10352f6e0:{0x102e734e0 0x102e735d0} 0x10353f980:{0x102e74110 0x102e74200} 0x1035428c0:{0x102e73300 0x102e733f0} 0x103542980:{0x102e73120 0x102e73210} 0x10354b100:0x102e7cc50 0x103550860:0x102e74890 0x103560920:{0x102e742f0 0x102e743e0} 0x1035780e0:{0x102e746b0 0x102e747a0} 0x103597980:0x1400003a2ac 0x103598ea0:0x102e7cb60] [{0x1034ecac0 0x102e76290} {0x1034ec7c0 0x102e76340} {0x1034ec840 0x102e763f0}] [{0x1034ecb40 0x102e74ef0} {0x1034ec940 0x102e74fe0}] map[1:0x102e75fd0 2:0x102e76080 3:0x102e76080 4:0x102e76080 5:0x102e76080 6:0x102e76080 7:0x1400003a2c8 8:0x1400003a2c8 9:0x1400003a2c8 10:0x1400003a2c8 11:0x1400003a2c8 13:0x102e76130 14:0x102e76130 17:0x102e761e0 21:0x1400003a2a7 22:0x14000108720 23:0x1400003a2aa 24:0x1400003a2ab 25:0x1400004a100] map[1:{0x102e74b60 0x102e74c50} 2:{0x102e715f0 0x102e716e0} 3:{0x102e715f0 0x102e716e0} 4:{0x102e715f0 0x102e716e0} 5:{0x102e715f0 0x102e716e0} 6:{0x102e715f0 0x102e716e0} 7:0x1400003a2c8 8:0x1400003a2c8 9:0x1400003a2c8 10:0x1400003a2c8 11:0x1400003a2c8 13:{0x102e717d0 0x102e718c0} 14:{0x102e717d0 0x102e718c0} 17:0x102e74d40 21:0x1400003a2a7 22:0x140001087e0 23:0x1400003a2aa 24:0x1400003a2ab 25:0x1400004a180] map[0:0x1034d8c60 1:0x1034a23a0 2:0x1034aa020 3:0x1034d8c60 4:0x1034bf0c0 5:0x10352f620 6:0x1034e1b80 7:0x10353f980 8:0x1034a1760 9:0x1034e1a00 11:0x103542980 12:0x1035428c0 13:0x1034a8ba0 14:0x1034a8be0 15:0x1035201a0 16:0x1034a96a0 17:0x10352f6e0 18:0x1034a96e0 19:0x103560920 127:0x1034e1a60 255:0x1034e1ac0] {{0 0} 0 0 0 0}})}]
+User Management Server Log | 2023/03/20 14:44:44 Could not update user[mongo: no documents in result]
+User Management Server Log | 2023/03/20 14:46:32 MongoDB|Connecting..
+User Management Server Log | 2023/03/20 14:46:32 MongoDB|Connected..
+User Management Server Log | 2023/03/20 14:46:32 MongoDB|Creating collection..
+User Management Server Log | 2023/03/20 14:46:32 MongoDB|Created collection..
+User Management Server Log | 2023/03/20 14:46:32 MongoDB|Database alive..
+User Management Server Log | 2023/03/20 14:46:32 gRPC|Connecting tcp socket..
+User Management Server Log | 2023/03/20 14:46:32 gRPC|Registering to User API
+User Management Server Log | 2023/03/20 14:46:32 gRPC|Registered to User API
+User Management Server Log | 2023/03/20 14:46:32 gRPC|Binding TCP Socket
+User Management Server Log | 2023/03/20 14:52:33 MongoDB|Connecting..
+User Management Server Log | 2023/03/20 14:52:33 MongoDB|Connected..
+User Management Server Log | 2023/03/20 14:52:33 MongoDB|Creating collection..
+User Management Server Log | 2023/03/20 14:52:33 MongoDB|Created collection..
+User Management Server Log | 2023/03/20 14:52:33 MongoDB|Database alive..
+User Management Server Log | 2023/03/20 14:52:33 gRPC|Connecting tcp socket..
+User Management Server Log | 2023/03/20 14:52:33 gRPC|Registering to User API
+User Management Server Log | 2023/03/20 14:52:33 gRPC|Registered to User API
+User Management Server Log | 2023/03/20 14:52:33 gRPC|Binding TCP Socket
+User Management Server Log | 2023/03/20 14:52:37 gRPC|Request converted to user model[&{ Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:52:37 Email is [true]
+User Management Server Log | 2023/03/20 14:52:37 Create called with[{ Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:52:37 Wrapped to[{7221e2e5-815f-4f71-b5f9-115e91cb22ae Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 2023-03-20 14:52:37.457076 +0300 +03 m=+4.295406209 2023-03-20 14:52:37.457077 +0300 +03 m=+4.295406376}]
+User Management Server Log | 2023/03/20 14:52:38 MongoDB|Inserting user [&{7221e2e5-815f-4f71-b5f9-115e91cb22ae Cagatay Ay excalibur $2a$14$TyWWYye2Z5Mo/GMgIXy5f.lINBurV1e6Yp5y3Ag0HlHtX.A.TesFC berkantay.5@gmail.com zimbambwe 2023-03-20 14:52:37.457076 +0300 +03 m=+4.295406209 2023-03-20 14:52:37.457077 +0300 +03 m=+4.295406376}]
+User Management Server Log | 2023/03/20 14:52:38 MongoDB|Insertion succesfull [7221e2e5-815f-4f71-b5f9-115e91cb22ae]
+User Management Server Log | 2023/03/20 14:52:38 User created with id[7221e2e5-815f-4f71-b5f9-115e91cb22ae]
+User Management Server Log | 2023/03/20 14:52:38 gRPC|Query called
+User Management Server Log | 2023/03/20 14:52:38 Query called for
+User Management Server Log | 2023/03/20 14:52:38 MongoDB|Querying user
+User Management Server Log | 2023/03/20 14:52:38 MongoDB|Query result [[map[data:[map[_id:8d544e1d-2cb1-4d36-b48e-bfd0edc117c7 country:zimbambwe created_at:%!s(primitive.DateTime=1679309138545) email:berkantay.5@gmail.com first_name:Cagatay last_name:Ay nickname:excalibur password:$2a$14$3s5rygSSHOa.OnGpflskgeBRFGsiyEGFf/46IttgSkolIieP7dMxS updated_at:%!s(primitive.DateTime=1679309138545)]] metadata:[map[total:%!s(int32=33)]]]]]
+User Management Server Log | 2023/03/20 14:52:38 gRPC|Updating user with [id:"3b63ee53-50ce-4691-a170-1d73db6756c8" first_name:"cagatay" last_name:"yucelen"]
+User Management Server Log | 2023/03/20 14:52:38 Update called with[{3b63ee53-50ce-4691-a170-1d73db6756c8 Cagatay Yucelen     0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:52:38 MongoDB|Updating user [&{3b63ee53-50ce-4691-a170-1d73db6756c8 Cagatay Yucelen     0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:52:38 MongoDB|Filter = [&[{_id 3b63ee53-50ce-4691-a170-1d73db6756c8}]]
+User Management Server Log | 2023/03/20 14:52:38 MongoDB|Update error is  [mongo: no documents in result]
+User Management Server Log | 2023/03/20 14:52:38 Could not update user[mongo: no documents in result]
+User Management Server Log | 2023/03/20 14:54:49 MongoDB|Connecting..
+User Management Server Log | 2023/03/20 14:54:49 MongoDB|Connected..
+User Management Server Log | 2023/03/20 14:54:49 MongoDB|Creating collection..
+User Management Server Log | 2023/03/20 14:54:49 MongoDB|Created collection..
+User Management Server Log | 2023/03/20 14:54:49 MongoDB|Database alive..
+User Management Server Log | 2023/03/20 14:54:49 gRPC|Connecting tcp socket..
+User Management Server Log | 2023/03/20 14:54:49 gRPC|Registering to User API
+User Management Server Log | 2023/03/20 14:54:49 gRPC|Registered to User API
+User Management Server Log | 2023/03/20 14:54:49 gRPC|Binding TCP Socket
+User Management Server Log | 2023/03/20 14:54:53 gRPC|Request converted to user model[&{ Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:54:53 Email is [true]
+User Management Server Log | 2023/03/20 14:54:53 Create called with[{ Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:54:53 Wrapped to[{6c9dfa28-62ee-4479-b0b6-ad089895ff2c Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 2023-03-20 14:54:53.083048 +0300 +03 m=+3.985541084 2023-03-20 14:54:53.083048 +0300 +03 m=+3.985541168}]
+User Management Server Log | 2023/03/20 14:54:54 MongoDB|Inserting user [&{6c9dfa28-62ee-4479-b0b6-ad089895ff2c Cagatay Ay excalibur $2a$14$KQCGSRaogHFf9rGlEl8RyuJdqqoZguIMSUATb3WW2bcE1t7VcAEF6 berkantay.5@gmail.com zimbambwe 2023-03-20 14:54:53.083048 +0300 +03 m=+3.985541084 2023-03-20 14:54:53.083048 +0300 +03 m=+3.985541168}]
+User Management Server Log | 2023/03/20 14:54:54 MongoDB|Insertion succesfull [6c9dfa28-62ee-4479-b0b6-ad089895ff2c]
+User Management Server Log | 2023/03/20 14:54:54 User created with id[6c9dfa28-62ee-4479-b0b6-ad089895ff2c]
+User Management Server Log | 2023/03/20 14:54:54 gRPC|Query called
+User Management Server Log | 2023/03/20 14:54:54 Query called for
+User Management Server Log | 2023/03/20 14:54:54 MongoDB|Querying user
+User Management Server Log | 2023/03/20 14:54:54 MongoDB|Query result [[{8d544e1d-2cb1-4d36-b48e-bfd0edc117c7 Cagatay Ay excalibur $2a$14$3s5rygSSHOa.OnGpflskgeBRFGsiyEGFf/46IttgSkolIieP7dMxS berkantay.5@gmail.com zimbambwe 2023-03-20 13:45:38.545 +0300 +03 2023-03-20 13:45:38.545 +0300 +03}]]
+User Management Server Log | 2023/03/20 14:54:54 gRPC|Updating user with [id:"3b63ee53-50ce-4691-a170-1d73db6756c8" first_name:"cagatay" last_name:"yucelen"]
+User Management Server Log | 2023/03/20 14:54:54 Update called with[{3b63ee53-50ce-4691-a170-1d73db6756c8 Cagatay Yucelen     0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:54:54 MongoDB|Updating user [&{3b63ee53-50ce-4691-a170-1d73db6756c8 Cagatay Yucelen     0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:54:54 MongoDB|Filter = [&[{_id 3b63ee53-50ce-4691-a170-1d73db6756c8}]]
+User Management Server Log | 2023/03/20 14:54:54 MongoDB|Update error is  [mongo: no documents in result]
+User Management Server Log | 2023/03/20 14:54:54 Could not update user[mongo: no documents in result]
+User Management Server Log | 2023/03/20 14:55:05 gRPC|Request converted to user model[&{ Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:55:05 Email is [true]
+User Management Server Log | 2023/03/20 14:55:05 Create called with[{ Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:55:05 Wrapped to[{9219bd6e-1be6-4ac6-b576-bf1e085e56be Cagatay Ay excalibur test123 berkantay.5@gmail.com zimbambwe 2023-03-20 14:55:05.999146 +0300 +03 m=+16.901508834 2023-03-20 14:55:05.999146 +0300 +03 m=+16.901508918}]
+User Management Server Log | 2023/03/20 14:55:07 MongoDB|Inserting user [&{9219bd6e-1be6-4ac6-b576-bf1e085e56be Cagatay Ay excalibur $2a$14$ZaT3BapzXc/lj5zWCuQOJ.MzUvPqBrqu9IqGrgo/GJYLfHaiUKtQC berkantay.5@gmail.com zimbambwe 2023-03-20 14:55:05.999146 +0300 +03 m=+16.901508834 2023-03-20 14:55:05.999146 +0300 +03 m=+16.901508918}]
+User Management Server Log | 2023/03/20 14:55:07 MongoDB|Insertion succesfull [9219bd6e-1be6-4ac6-b576-bf1e085e56be]
+User Management Server Log | 2023/03/20 14:55:07 User created with id[9219bd6e-1be6-4ac6-b576-bf1e085e56be]
+User Management Server Log | 2023/03/20 14:55:07 gRPC|Query called
+User Management Server Log | 2023/03/20 14:55:07 Query called for
+User Management Server Log | 2023/03/20 14:55:07 MongoDB|Querying user
+User Management Server Log | 2023/03/20 14:55:07 MongoDB|Query result [[{8d544e1d-2cb1-4d36-b48e-bfd0edc117c7 Cagatay Ay excalibur $2a$14$3s5rygSSHOa.OnGpflskgeBRFGsiyEGFf/46IttgSkolIieP7dMxS berkantay.5@gmail.com zimbambwe 2023-03-20 13:45:38.545 +0300 +03 2023-03-20 13:45:38.545 +0300 +03}]]
+User Management Server Log | 2023/03/20 14:55:07 gRPC|Updating user with [id:"3b63ee53-50ce-4691-a170-1d73db6756c8" first_name:"cagatay" last_name:"yucelen"]
+User Management Server Log | 2023/03/20 14:55:07 Update called with[{3b63ee53-50ce-4691-a170-1d73db6756c8 Cagatay Yucelen     0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:55:07 MongoDB|Updating user [&{3b63ee53-50ce-4691-a170-1d73db6756c8 Cagatay Yucelen     0001-01-01 00:00:00 +0000 UTC 0001-01-01 00:00:00 +0000 UTC}]
+User Management Server Log | 2023/03/20 14:55:07 MongoDB|Filter = [&[{_id 3b63ee53-50ce-4691-a170-1d73db6756c8}]]
+User Management Server Log | 2023/03/20 14:55:07 MongoDB|Update error is  [mongo: no documents in result]
+User Management Server Log | 2023/03/20 14:55:07 Could not update user[mongo: no documents in result]

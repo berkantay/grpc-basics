@@ -2,38 +2,40 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
-	"github.com/berkantay/user-management-service/internal/adapters/driven/storage"
-	"github.com/berkantay/user-management-service/internal/adapters/driving/grpcserver"
-	"github.com/berkantay/user-management-service/internal/user"
+	"github.com/berkantay/user-management-service/database"
+	"github.com/berkantay/user-management-service/grpc"
+	"github.com/berkantay/user-management-service/user"
 )
 
 func main() {
 
-	fmt.Println("url", os.Getenv("MONGO_URL"))
+	file, err := os.OpenFile("user-management-service.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
 
-	database, err := storage.NewStorage(
-		storage.WithHost(os.Getenv("MONGO_URL")),
+	logger := log.New(file, "User Management Server Log | ", log.LstdFlags)
+
+	database, err := database.NewStorage(
+		database.WithHost(os.Getenv("MONGO_URL")),
+		database.WithLogger(logger),
 	)
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	err = database.HealthCheck(context.Background())
-
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer database.GracefullShutdown(context.Background())
 
-	defer database.GracefullShutdown()
+	application := user.NewService(database, logger)
 
-	application := user.NewService(database)
-
-	server := grpcserver.NewServer(application)
-
+	server := grpc.NewServer(application, logger)
 	server.Run()
 }

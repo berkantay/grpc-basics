@@ -1,19 +1,15 @@
-package storage
+package database
 
 import (
 	"context"
 	"fmt"
-	"time"
+	"log"
 
-	"github.com/berkantay/user-management-service/internal/model"
+	"github.com/berkantay/user-management-service/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-)
-
-const (
-	dbOperationTimeout = 10 * time.Second
 )
 
 type Storage struct {
@@ -21,13 +17,13 @@ type Storage struct {
 	context    context.Context
 	client     *mongo.Client
 	collection *mongo.Collection
+	logger     *log.Logger
 }
 
 // Configure storage by chaning host or context.
 type StorageOption func(*Storage)
 
 func WithHost(uri string) StorageOption {
-
 	return func(s *Storage) {
 
 		s.host = uri
@@ -41,15 +37,17 @@ func WithContext(ctx context.Context) StorageOption {
 	}
 }
 
+func WithLogger(logger *log.Logger) StorageOption {
+	return func(s *Storage) {
+		s.logger = logger
+	}
+}
+
 // Create new connection to the database instance.
 func NewStorage(opts ...StorageOption) (*Storage, error) {
-
-	ctx, _ := context.WithTimeout(context.Background(), dbOperationTimeout)
-	// defer cancel()
-
 	s := &Storage{
 		host:    "mongodb://127.0.0.1:27017",
-		context: ctx,
+		context: context.Background(),
 	}
 
 	for _, opt := range opts {
@@ -57,22 +55,22 @@ func NewStorage(opts ...StorageOption) (*Storage, error) {
 	}
 
 	clientOptions := options.Client().ApplyURI(s.host)
-
-	client, err := mongo.Connect(ctx, clientOptions)
+	s.logger.Printf("MongoDB|Connecting..")
+	client, err := mongo.Connect(s.context, clientOptions)
+	s.logger.Printf("MongoDB|Connected..")
 	if err != nil {
+		s.logger.Printf("MongoDB|Could not connected [%s]", err)
 		return nil, err
 	}
-
 	s.client = client
-
+	s.logger.Printf("MongoDB|Creating collection..")
 	s.collection = s.createCollection("user", "information")
-
+	s.logger.Printf("MongoDB|Created collection..")
 	return s, nil
 }
 
 // Create collection in database
 func (s *Storage) createCollection(database, collection string) *mongo.Collection {
-
 	return s.client.Database(database).Collection(collection)
 }
 
@@ -80,96 +78,93 @@ func (s *Storage) createCollection(database, collection string) *mongo.Collectio
 func (s *Storage) HealthCheck(ctx context.Context) error {
 	err := s.client.Ping(ctx, nil)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return err
 	}
-	fmt.Println("Connection 200")
+	s.logger.Printf("MongoDB|Database alive..")
 	return nil
 }
 
 // Create user in database with given type.
-func (s *Storage) CreateUser(user *model.User) (*string, error) {
+func (s *Storage) CreateUser(ctx context.Context, user *model.User) (*string, error) {
 	//TODO: user id could be checked whether if exists or not. If exists generate another uuid to keep uniqueness.
-	res, err := s.collection.InsertOne(context.Background(), user)
-
+	s.logger.Printf("MongoDB|Inserting user [%s]", user)
+	res, err := s.collection.InsertOne(ctx, user)
 	if err != nil {
+		s.logger.Printf("MongoDB|Could not insert entry [%s]", err)
 		return nil, err
 	}
-
 	insertionId := res.InsertedID.(string)
-
+	s.logger.Printf("MongoDB|Insertion succesfull [%s]", insertionId)
 	return &insertionId, nil
 }
 
 // Update user in database with given type. Updates only one item.
-func (s *Storage) UpdateUser(user *model.User) error {
+func (s *Storage) UpdateUser(ctx context.Context, user *model.User) error {
+	s.logger.Printf("MongoDB|Updating user [%s]", user)
 	filterID := schemeIDFilter(user.ID)
-
+	s.logger.Printf("MongoDB|Filter = [%s]", filterID)
 	updateDocument := bson.M{
 		"$set": toUserBson(user),
 	}
-
-	result := s.collection.FindOneAndUpdate(context.Background(), filterID, updateDocument)
-
+	result := s.collection.FindOneAndUpdate(ctx, filterID, updateDocument)
 	if result.Err() != nil {
+		s.logger.Printf("MongoDB|Update error is  [%s]", result.Err())
 		return result.Err()
 	}
-
+	s.logger.Printf("MongoDB|Updated user.")
 	return nil
-
 }
 
 // Remove user in database with corresponding id.
-func (s *Storage) RemoveUser(id string) error {
-
+func (s *Storage) RemoveUser(ctx context.Context, id string) error {
+	s.logger.Printf("MongoDB|Removing user id:[%s]", id)
 	filterId := schemeIDFilter(id)
 	//TODO: user id could be checked whether if exists or not in the collection to inform client.
-	_, err := s.collection.DeleteOne(context.Background(), filterId,
-
+	_, err := s.collection.DeleteOne(ctx, filterId,
 		&options.DeleteOptions{
 			Comment: fmt.Sprintf("%s document is deleted from the collection", filterId),
 		})
-
 	if err != nil {
+		s.logger.Printf("MongoDB|Could not remove [%s] error is: [%s]", id, err)
 		return err
 	}
-
 	return nil
-
 }
 
 // Query users with a filter.
-func (s *Storage) QueryUsers(filter *model.UserQuery) ([]model.User, error) {
+func (s *Storage) QueryUsers(ctx context.Context, filter *model.UserQuery) ([]model.User, error) {
+	s.logger.Printf("MongoDB|Querying user")
+	var results []bson.M
 
 	limit := int64(*filter.Size)
 	// skip := int64(*filter.Page)*limit - limit
-
-	queryFilter := filterBuilder(filter)
-
-	fmt.Println("Query filter is", queryFilter)
-
-	pipeline := createPipeline(queryFilter, limit)
-
-	cur, err := s.collection.Aggregate(context.Background(), pipeline)
-
+	pipeline := createPipeline(filterBuilder(filter), limit)
+	cur, err := s.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
-
-	var results []bson.M
 	if err = cur.All(context.TODO(), &results); err != nil {
 		panic(err)
 	}
 
-	return fromBsonToUser(results)
+	res, err := fromBsonToUser(results)
 
+	s.logger.Printf("MongoDB|Query result [%s]", res)
+
+	if err != nil {
+		s.logger.Printf("MongoDB|Could not convert BSON to User model. Error is: [%s]", err)
+		return nil, err
+	}
+
+	return res, nil
 }
 
 // Disconnect from database.
-func (s *Storage) GracefullShutdown() error {
-
-	err := s.client.Disconnect(context.Background())
-
+func (s *Storage) GracefullShutdown(ctx context.Context) error {
+	s.logger.Printf("MongoDB|Shutting down..")
+	err := s.client.Disconnect(ctx)
+	s.logger.Printf("MongoDB|Closed.")
 	if err != nil {
 		return err
 	}

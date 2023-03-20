@@ -1,15 +1,14 @@
-package grpcserver
+package grpc
 
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net"
+	"net/mail"
 
-	pb "github.com/berkantay/user-management-service/internal/adapters/driving/proto"
-	"github.com/berkantay/user-management-service/internal/model"
-	"github.com/berkantay/user-management-service/pkg/utility"
+	pb "github.com/berkantay/user-management-service/grpc/proto"
+	"github.com/berkantay/user-management-service/model"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
@@ -17,51 +16,55 @@ import (
 )
 
 type UserService interface {
-	CreateUser(user *model.User) (*string, error)
-	UpdateUser(user *model.User) error
-	RemoveUser(userId string) error
-	QueryUsers(query *model.UserQuery) ([]model.User, error)
+	Create(ctx context.Context, user *model.User) (*string, error)
+	Update(ctx context.Context, user *model.User) error
+	Remove(ctx context.Context, userId string) error
+	Query(ctx context.Context, query *model.UserQuery) ([]model.User, error)
 }
 
 type Server struct {
-	service UserService
-	pb.UnimplementedUserApiServer
+	user UserService
+	pb.UnimplementedUserAPIServer
+	logger *log.Logger
 }
 
-func NewServer(service UserService) *Server {
-
+func NewServer(service UserService, logger *log.Logger) *Server {
 	return &Server{
-		service: service,
+		user:   service,
+		logger: logger,
 	}
 }
 
 // Run the gRPC server.
 func (s *Server) Run() {
-
+	s.logger.Printf("gRPC|Connecting tcp socket..")
 	listen, err := net.Listen("tcp", ":8080")
 	if err != nil {
-		log.Fatalf("failed to listen on port 8080: %v", err)
+		s.logger.Printf("failed to listen on port 8080 [%v]", err)
 	}
 
 	userManagementService := s
 
 	grpcServer := grpc.NewServer()
+	s.logger.Printf("gRPC|Registering to User API")
+	pb.RegisterUserAPIServer(grpcServer, userManagementService)
+	s.logger.Printf("gRPC|Registered to User API")
 
-	pb.RegisterUserApiServer(grpcServer, userManagementService)
-
+	s.logger.Printf("gRPC|Binding TCP Socket")
 	grpcServer.Serve(listen)
+	s.logger.Printf("gRPC|Binded")
 	defer grpcServer.Stop()
 
 }
 
 // Implements CreateUser function according to proto definition.
-func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+func (s *Server) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 	wrappedMessage := createUserRequestToUser(req)
-
-	isValidEmail := utility.CheckIsValidMail(req.Email)
+	s.logger.Printf("gRPC|Request converted to user model[%s]", wrappedMessage)
+	isValidEmail := checkIsValidMail(req.Email)
+	s.logger.Printf("Email is [%t]", isValidEmail)
 
 	if !isValidEmail {
-
 		return &pb.CreateUserResponse{
 			Status: &pb.Status{
 				Code:    "INVALID_ARGUMENT",
@@ -70,7 +73,7 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		}, errors.New("invalid email")
 	}
 
-	insertionId, err := s.service.CreateUser(wrappedMessage)
+	insertionId, err := s.user.Create(ctx, wrappedMessage)
 
 	if err != nil {
 		return &pb.CreateUserResponse{
@@ -93,11 +96,9 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 }
 
 // Implements DeleteUser function according to proto definition.
-func (s *Server) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
-
-	fmt.Println("Deleting user", req.Id)
-
-	err := s.service.RemoveUser(req.Id)
+func (s *Server) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
+	s.logger.Printf("gRPC|Deleting user with id[%s]", req.Id)
+	err := s.user.Remove(ctx, req.Id)
 
 	if err != nil {
 		return &pb.DeleteUserResponse{
@@ -117,10 +118,9 @@ func (s *Server) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest) (*pb
 }
 
 // Implements UpdateUser function according to proto definition.
-func (s *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-	fmt.Println("Updating user", req.Id)
-
-	err := s.service.UpdateUser(updateUserRequestToUser(req))
+func (s *Server) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+	s.logger.Printf("gRPC|Updating user with [%s]", req)
+	err := s.user.Update(ctx, updateUserRequestToUser(req))
 
 	if err != nil {
 		return &pb.UpdateUserResponse{
@@ -141,11 +141,9 @@ func (s *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb
 }
 
 // Implements QueryUsers function according to proto definition.
-func (s *Server) QueryUsers(ctx context.Context, req *pb.QueryUsersRequest) (*pb.QueryUsersResponse, error) {
-
-	userQuery := toUserQuery(req)
-
-	user, err := s.service.QueryUsers(userQuery)
+func (s *Server) Query(ctx context.Context, req *pb.QueryUsersRequest) (*pb.QueryUsersResponse, error) {
+	s.logger.Printf("gRPC|Query called")
+	user, err := s.user.Query(ctx, toUserQuery(req))
 
 	if err != nil {
 		return &pb.QueryUsersResponse{
@@ -166,12 +164,10 @@ func (s *Server) QueryUsers(ctx context.Context, req *pb.QueryUsersRequest) (*pb
 	}
 
 	return toPbQueryResponse(user, req), nil
-
 }
 
 // Convert protobuf CREATE request structure to User model.
 func createUserRequestToUser(req *pb.CreateUserRequest) *model.User { //TODO:move this wrapping layer from server logic
-
 	return &model.User{
 		FirstName: cases.Title(language.English, cases.Compact).String(req.FirstName),
 		LastName:  cases.Title(language.English, cases.Compact).String(req.LastName),
@@ -246,4 +242,9 @@ func toPbQueryResponse(users []model.User, req *pb.QueryUsersRequest) *pb.QueryU
 			Size: *req.Size,
 		},
 	}
+}
+
+func checkIsValidMail(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
 }

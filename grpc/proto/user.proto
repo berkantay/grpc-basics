@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package main;
+
+
+option go_package = "./";
+
+service UserAPI {
+    // Create user on database
+    rpc Create(CreateUserRequest) returns (CreateUserResponse);
+    // Delete user from database
+    rpc Delete(DeleteUserRequest) returns (DeleteUserResponse);
+    // Update user on database
+    rpc Update(UpdateUserRequest) returns (UpdateUserResponse);
+    //Query user from database
+    rpc Query(QueryUsersRequest) returns (QueryUsersResponse);
+}
+
+message Status{
+    string code =1; //Operation status code.
+    string message = 2; //Definition of the status code.
+}
+
+/* DeleteUserRequest represents a Delete operation. It deletes user with provided id. */
+message DeleteUserRequest{
+    string id = 1; //Which user ID will be deleted?
+
+}
+/* DeleteUserResponse returns status a result of delete operation.*/
+message DeleteUserResponse{
+    Status status = 1; 
+}
+/* CreateUserRequest represents a Create request. It creates user with provided information. */
+message CreateUserRequest{
+    string first_name = 1;  //User first name
+    string last_name = 2;   //User last name
+    string nick_name = 3;   //User nickname
+    string password = 4;    //User Password
+    string email = 5;       //User email
+    string country = 6;     //User country
+}
+/* CreateUserResponse represents the response CreateUserRequest request. Returns status and UserPayload as response.*/
+message CreateUserResponse{
+    Status status = 1;
+    UserPayload payload =2;
+}
+/* Includes user information.*/
+message UserPayload{
+    string id =1;           //User id returned from database
+    string first_name = 2;  //User first name returned from database.
+    string last_name = 3;   //User last name returned from database. 
+    string nick_name = 4;   //User nickname returned from database.
+    string password = 5;    //User password returned from database.
+    string email = 6;       //User email returned from database.
+    string country = 7;     //User country returned from database.
+}
+/* UpdateUserRequest represents a Update request. It updates user with given ID to provided user information */
+message UpdateUserRequest{
+    string id =1;           //User id
+    string first_name = 2;  //User fist name
+    string last_name = 3;   //User last name
+    string nick_name = 4;   //User nickname
+    string password = 5;    //User password
+    string email = 6;       //User email
+    string country = 7;     //User country
+
+}
+/* UpdateUserResponse represents a Update response. Returns status and UserPayload as response. */
+message UpdateUserResponse{
+    Status status = 1;
+    UserPayload payload =2;
+    
+}
+/* QueryUsersRequest represents a Query request. It asks for server the collect user with provided filter. */
+message QueryUsersRequest{
+    optional string id =1;          //User id
+    optional string first_name = 2; //User fist name
+    optional string last_name = 3;  //User last name
+    optional string nick_name = 4;  //User nickname
+    optional string email = 5;      //User email
+    optional string country = 6;    //User country
+    optional int64 page = 7;        //Response page number
+    optional int64 size = 8;        //Response page size
+
+}
+/* QueryUsersResponse represents a Query response. Returns status, UserPayload and Meta as response . */
+message QueryUsersResponse{
+    Status status = 1;                  //Query status
+    repeated UserPayload payload =2;    //Query payload
+    Meta meta = 3;                      
+}
+
+message Meta{
+    int64 page = 1;                 //Page number
+    int64 size = 2;                 //Page size
+    optional int64 next_page = 3;   //Next page 
+}
+
+
+
