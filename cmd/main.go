@@ -17,7 +17,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	database.HealthCheck(context.Background())
+	err = database.HealthCheck(context.Background())
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	defer database.GracefullShutdown()
 

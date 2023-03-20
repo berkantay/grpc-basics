@@ -1,0 +1,14 @@
+version: "3"
+
+services:
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
+  app:
+    image: user-management-service
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017

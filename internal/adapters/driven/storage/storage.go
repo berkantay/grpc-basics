@@ -54,7 +54,7 @@ func NewStorage(opts ...StorageOption) (*Storage, error) {
 	// defer cancel()
 
 	s := &Storage{
-		Host:    "mongodb://127.0.0.1",
+		Host:    "mongodb://mongodb",
 		Port:    27017,
 		Context: ctx,
 	}
