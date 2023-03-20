@@ -166,6 +166,15 @@ func (s *Server) Query(ctx context.Context, req *pb.QueryUsersRequest) (*pb.Quer
 	return toPbQueryResponse(user, req), nil
 }
 
+func (s *Server) HealthCheck(ctx context.Context, req *pb.HealthcheckRequest) (*pb.HealthcheckResponse, error) {
+	return &pb.HealthcheckResponse{
+		Status: &pb.Status{
+			Code:    "OK",
+			Message: "Service alive.",
+		},
+	}, nil
+}
+
 // Convert protobuf CREATE request structure to User model.
 func createUserRequestToUser(req *pb.CreateUserRequest) *model.User { //TODO:move this wrapping layer from server logic
 	return &model.User{

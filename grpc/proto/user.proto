@@ -14,6 +14,8 @@ service UserAPI {
     rpc Update(UpdateUserRequest) returns (UpdateUserResponse);
     //Query user from database
     rpc Query(QueryUsersRequest) returns (QueryUsersResponse);
+    //Health check of service
+    rpc HealthCheck(HealthcheckRequest) returns (HealthcheckResponse);
 }
 
 message Status{
@@ -95,6 +97,10 @@ message Meta{
     int64 size = 2;                 //Page size
     optional int64 next_page = 3;   //Next page 
 }
+//Used for healthcheck
+message HealthcheckRequest{}
 
-
-
+//Healthcheck Response
+message HealthcheckResponse{
+    Status status = 1;
+}

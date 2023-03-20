@@ -22,10 +22,16 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserAPIClient interface {
+	// Create user on database
 	Create(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
+	// Delete user from database
 	Delete(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
+	// Update user on database
 	Update(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
+	// Query user from database
 	Query(ctx context.Context, in *QueryUsersRequest, opts ...grpc.CallOption) (*QueryUsersResponse, error)
+	// Health check of service
+	HealthCheck(ctx context.Context, in *HealthcheckRequest, opts ...grpc.CallOption) (*HealthcheckResponse, error)
 }
 
 type userAPIClient struct {
@@ -72,14 +78,29 @@ func (c *userAPIClient) Query(ctx context.Context, in *QueryUsersRequest, opts .
 	return out, nil
 }
 
+func (c *userAPIClient) HealthCheck(ctx context.Context, in *HealthcheckRequest, opts ...grpc.CallOption) (*HealthcheckResponse, error) {
+	out := new(HealthcheckResponse)
+	err := c.cc.Invoke(ctx, "/main.UserAPI/HealthCheck", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserAPIServer is the server API for UserAPI service.
 // All implementations must embed UnimplementedUserAPIServer
 // for forward compatibility
 type UserAPIServer interface {
+	// Create user on database
 	Create(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
+	// Delete user from database
 	Delete(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
+	// Update user on database
 	Update(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
+	// Query user from database
 	Query(context.Context, *QueryUsersRequest) (*QueryUsersResponse, error)
+	// Health check of service
+	HealthCheck(context.Context, *HealthcheckRequest) (*HealthcheckResponse, error)
 	mustEmbedUnimplementedUserAPIServer()
 }
 
@@ -98,6 +119,9 @@ func (UnimplementedUserAPIServer) Update(context.Context, *UpdateUserRequest) (*
 }
 func (UnimplementedUserAPIServer) Query(context.Context, *QueryUsersRequest) (*QueryUsersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
+}
+func (UnimplementedUserAPIServer) HealthCheck(context.Context, *HealthcheckRequest) (*HealthcheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedUserAPIServer) mustEmbedUnimplementedUserAPIServer() {}
 
@@ -184,6 +208,24 @@ func _UserAPI_Query_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserAPI_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthcheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserAPIServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/main.UserAPI/HealthCheck",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserAPIServer).HealthCheck(ctx, req.(*HealthcheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserAPI_ServiceDesc is the grpc.ServiceDesc for UserAPI service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -206,6 +248,10 @@ var UserAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Query",
 			Handler:    _UserAPI_Query_Handler,
+		},
+		{
+			MethodName: "HealthCheck",
+			Handler:    _UserAPI_HealthCheck_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

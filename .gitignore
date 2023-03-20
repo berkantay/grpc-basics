@@ -1,1 +1,3 @@
-./user-management-service
+user-management-service
+*.log
+*.out
