@@ -2,9 +2,7 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/berkantay/user-management-service/internal/model"
@@ -19,72 +17,68 @@ const (
 )
 
 type Storage struct {
-	Host       string
-	Port       int
-	Context    context.Context
-	Client     *mongo.Client
-	Collection *mongo.Collection
+	host       string
+	context    context.Context
+	client     *mongo.Client
+	collection *mongo.Collection
 }
 
+// Configure storage by chaning host or context.
 type StorageOption func(*Storage)
 
 func WithHost(uri string) StorageOption {
 
 	return func(s *Storage) {
 
-		s.Host = uri
+		s.host = uri
 	}
 }
 
-func WithPort(port int) StorageOption {
-	return func(s *Storage) {
-		s.Port = port
-	}
-}
-
+// Database connection context.
 func WithContext(ctx context.Context) StorageOption {
 	return func(s *Storage) {
-		s.Context = ctx
+		s.context = ctx
 	}
 }
 
+// Create new connection to the database instance.
 func NewStorage(opts ...StorageOption) (*Storage, error) {
 
 	ctx, _ := context.WithTimeout(context.Background(), dbOperationTimeout)
 	// defer cancel()
 
 	s := &Storage{
-		Host:    "mongodb://mongodb",
-		Port:    27017,
-		Context: ctx,
+		host:    "mongodb://127.0.0.1:27017",
+		context: ctx,
 	}
 
 	for _, opt := range opts {
 		opt(s)
 	}
 
-	uri := s.Host + ":" + strconv.Itoa(s.Port)
-
-	fmt.Println("URI is:", uri)
-
-	clientOptions := options.Client().ApplyURI(uri)
+	clientOptions := options.Client().ApplyURI(s.host)
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("Connected db instance..")
+	s.client = client
 
-	s.Client = client
-
-	s.Collection = s.Client.Database("user").Collection("information")
+	s.collection = s.createCollection("user", "information")
 
 	return s, nil
 }
 
+// Create collection in database
+func (s *Storage) createCollection(database, collection string) *mongo.Collection {
+
+	return s.client.Database(database).Collection(collection)
+}
+
+// Check if database is alive or not.
 func (s *Storage) HealthCheck(ctx context.Context) error {
-	err := s.Client.Ping(ctx, nil)
+	err := s.client.Ping(ctx, nil)
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -93,16 +87,21 @@ func (s *Storage) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-func (s *Storage) CreateUser(user *model.User) error {
+// Create user in database with given type.
+func (s *Storage) CreateUser(user *model.User) (*string, error) {
 	//TODO: user id could be checked whether if exists or not. If exists generate another uuid to keep uniqueness.
-	_, err := s.Collection.InsertOne(context.Background(), user)
+	res, err := s.collection.InsertOne(context.Background(), user)
+
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	insertionId := res.InsertedID.(string)
+
+	return &insertionId, nil
 }
 
+// Update user in database with given type. Updates only one item.
 func (s *Storage) UpdateUser(user *model.User) error {
 	filterID := schemeIDFilter(user.ID)
 
@@ -110,7 +109,7 @@ func (s *Storage) UpdateUser(user *model.User) error {
 		"$set": toUserBson(user),
 	}
 
-	result := s.Collection.FindOneAndUpdate(context.Background(), filterID, updateDocument)
+	result := s.collection.FindOneAndUpdate(context.Background(), filterID, updateDocument)
 
 	if result.Err() != nil {
 		return result.Err()
@@ -120,16 +119,12 @@ func (s *Storage) UpdateUser(user *model.User) error {
 
 }
 
-func (s *Storage) RemoveUserById(filter any) error {
+// Remove user in database with corresponding id.
+func (s *Storage) RemoveUser(id string) error {
 
-	if filter == nil {
-
-		return errors.New("nil filter")
-	}
-
-	filterId := schemeIDFilter(filter)
+	filterId := schemeIDFilter(id)
 	//TODO: user id could be checked whether if exists or not in the collection to inform client.
-	_, err := s.Collection.DeleteOne(context.Background(), filterId,
+	_, err := s.collection.DeleteOne(context.Background(), filterId,
 
 		&options.DeleteOptions{
 			Comment: fmt.Sprintf("%s document is deleted from the collection", filterId),
@@ -143,6 +138,7 @@ func (s *Storage) RemoveUserById(filter any) error {
 
 }
 
+// Query users with a filter.
 func (s *Storage) QueryUsers(filter *model.UserQuery) ([]model.User, error) {
 
 	limit := int64(*filter.Size)
@@ -154,7 +150,7 @@ func (s *Storage) QueryUsers(filter *model.UserQuery) ([]model.User, error) {
 
 	pipeline := createPipeline(queryFilter, limit)
 
-	cur, err := s.Collection.Aggregate(context.Background(), pipeline)
+	cur, err := s.collection.Aggregate(context.Background(), pipeline)
 
 	if err != nil {
 		return nil, err
@@ -169,9 +165,10 @@ func (s *Storage) QueryUsers(filter *model.UserQuery) ([]model.User, error) {
 
 }
 
+// Disconnect from database.
 func (s *Storage) GracefullShutdown() error {
 
-	err := s.Client.Disconnect(context.Background())
+	err := s.client.Disconnect(context.Background())
 
 	if err != nil {
 		return err
@@ -180,6 +177,7 @@ func (s *Storage) GracefullShutdown() error {
 	return nil
 }
 
+// Creates query pipeline for the aggregation.
 func createPipeline(filter *bson.D, limit int64) []bson.M {
 	pipeline := []bson.M{
 		{"$match": *filter},
@@ -195,6 +193,7 @@ func createPipeline(filter *bson.D, limit int64) []bson.M {
 	return pipeline
 }
 
+// Builds the custom filter.
 func filterBuilder(filter *model.UserQuery) *bson.D {
 
 	f := bson.D{}
@@ -215,11 +214,13 @@ func filterBuilder(filter *model.UserQuery) *bson.D {
 	return &f
 }
 
+// Extract _id from filter.
 func schemeIDFilter(filter any) *bson.D {
 
 	return &bson.D{{Key: "_id", Value: filter}}
 }
 
+// Converts user struct to BSON Document pointer.
 func toUserBson(user *model.User) *bson.D {
 
 	return &bson.D{
@@ -232,6 +233,7 @@ func toUserBson(user *model.User) *bson.D {
 	}
 }
 
+// Converts BSON Document to user slice.
 func fromBsonToUser(queriedUser []primitive.M) ([]model.User, error) {
 
 	var result []model.User

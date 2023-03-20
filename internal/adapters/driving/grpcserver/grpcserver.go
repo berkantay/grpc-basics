@@ -17,7 +17,7 @@ import (
 )
 
 type UserService interface {
-	CreateUser(user *model.User) error
+	CreateUser(user *model.User) (*string, error)
 	UpdateUser(user *model.User) error
 	RemoveUser(userId string) error
 	QueryUsers(query *model.UserQuery) ([]model.User, error)
@@ -35,6 +35,7 @@ func NewServer(service UserService) *Server {
 	}
 }
 
+// Run the gRPC server.
 func (s *Server) Run() {
 
 	listen, err := net.Listen("tcp", ":8080")
@@ -53,6 +54,7 @@ func (s *Server) Run() {
 
 }
 
+// Implements CreateUser function according to proto definition.
 func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 	wrappedMessage := createUserRequestToUser(req)
 
@@ -68,7 +70,7 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		}, errors.New("invalid email")
 	}
 
-	err := s.service.CreateUser(wrappedMessage)
+	insertionId, err := s.service.CreateUser(wrappedMessage)
 
 	if err != nil {
 		return &pb.CreateUserResponse{
@@ -83,10 +85,14 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		Status: &pb.Status{
 			Code:    "OK",
 			Message: "User created.",
+		},
+		Payload: &pb.UserPayload{
+			Id: *insertionId,
 		}, //TODO Fill user info from db
 	}, nil
 }
 
+// Implements DeleteUser function according to proto definition.
 func (s *Server) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
 
 	fmt.Println("Deleting user", req.Id)
@@ -110,6 +116,7 @@ func (s *Server) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest) (*pb
 	}, nil
 }
 
+// Implements UpdateUser function according to proto definition.
 func (s *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
 	fmt.Println("Updating user", req.Id)
 
@@ -133,6 +140,7 @@ func (s *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb
 
 }
 
+// Implements QueryUsers function according to proto definition.
 func (s *Server) QueryUsers(ctx context.Context, req *pb.QueryUsersRequest) (*pb.QueryUsersResponse, error) {
 
 	userQuery := toUserQuery(req)
@@ -161,6 +169,7 @@ func (s *Server) QueryUsers(ctx context.Context, req *pb.QueryUsersRequest) (*pb
 
 }
 
+// Convert protobuf CREATE request structure to User model.
 func createUserRequestToUser(req *pb.CreateUserRequest) *model.User { //TODO:move this wrapping layer from server logic
 
 	return &model.User{
@@ -173,6 +182,7 @@ func createUserRequestToUser(req *pb.CreateUserRequest) *model.User { //TODO:mov
 	}
 }
 
+// Convert protobuf UPDATE request structure to User model.
 func updateUserRequestToUser(req *pb.UpdateUserRequest) *model.User { //TODO:move this wrapping layer from server logic
 	return &model.User{
 		ID:        req.Id,
@@ -185,6 +195,7 @@ func updateUserRequestToUser(req *pb.UpdateUserRequest) *model.User { //TODO:mov
 	}
 }
 
+// Convert protobuf QUERY request structure to User model.
 func toUserQuery(req *pb.QueryUsersRequest) *model.UserQuery {
 	defaultPage := int64(1)
 	defaultSize := int64(10)
@@ -209,6 +220,7 @@ func toUserQuery(req *pb.QueryUsersRequest) *model.UserQuery {
 	}
 }
 
+// Convert User model to protobuf QueryUsersResponse.
 func toPbQueryResponse(users []model.User, req *pb.QueryUsersRequest) *pb.QueryUsersResponse {
 	payload := make([]*pb.UserPayload, 0)
 	for _, u := range users {

@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/berkantay/user-management-service/internal/adapters/driven/storage"
 	"github.com/berkantay/user-management-service/internal/adapters/driving/grpcserver"
@@ -11,7 +13,11 @@ import (
 
 func main() {
 
-	database, err := storage.NewStorage()
+	fmt.Println("url", os.Getenv("MONGO_URL"))
+
+	database, err := storage.NewStorage(
+		storage.WithHost(os.Getenv("MONGO_URL")),
+	)
 
 	if err != nil {
 		log.Fatal(err)

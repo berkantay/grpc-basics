@@ -11,9 +11,9 @@ import (
 )
 
 type UserRepository interface {
-	CreateUser(user *model.User) error
+	CreateUser(user *model.User) (*string, error)
 	UpdateUser(user *model.User) error
-	RemoveUserById(filter any) error
+	RemoveUser(id string) error
 	QueryUsers(filter *model.UserQuery) ([]model.User, error)
 	HealthCheck(ctx context.Context) error
 	GracefullShutdown() error
@@ -23,6 +23,7 @@ type Service struct {
 	db UserRepository
 }
 
+// Create new user service.
 func NewService(db UserRepository) *Service {
 
 	return &Service{
@@ -30,7 +31,8 @@ func NewService(db UserRepository) *Service {
 	}
 }
 
-func (app *Service) CreateUser(user *model.User) error {
+// Fills necessary informations and creates user.
+func (app *Service) CreateUser(user *model.User) (*string, error) {
 
 	user.ID = uuid.NewString()
 	user.CreatedAt = time.Now()
@@ -38,20 +40,21 @@ func (app *Service) CreateUser(user *model.User) error {
 
 	hashed, err := encryption.HashPassword(user.Password)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	user.Password = hashed
 
-	err = app.db.CreateUser(user)
+	insertionId, err := app.db.CreateUser(user)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return insertionId, nil
 
 }
 
+// Updates user.
 func (app *Service) UpdateUser(user *model.User) error {
 
 	err := app.db.UpdateUser(user)
@@ -63,9 +66,10 @@ func (app *Service) UpdateUser(user *model.User) error {
 	return nil
 }
 
+// Remove user by given id.
 func (app *Service) RemoveUser(userId string) error {
 
-	err := app.db.RemoveUserById(userId)
+	err := app.db.RemoveUser(userId)
 	if err != nil {
 		return err
 	}
@@ -73,8 +77,8 @@ func (app *Service) RemoveUser(userId string) error {
 	return nil
 }
 
+// Query user for the given UserQuery, return list of users after query operation and error if exists.
 func (app *Service) QueryUsers(query *model.UserQuery) ([]model.User, error) {
-
 	users, err := app.db.QueryUsers(query)
 
 	if err != nil {
@@ -86,32 +90,9 @@ func (app *Service) QueryUsers(query *model.UserQuery) ([]model.User, error) {
 	return users, nil
 }
 
-func (app *Service) DatabaseHealthCheck(ctx context.Context) error {
-
-	err := app.db.HealthCheck(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (app *Service) Echo(ctx context.Context) error {
 
 	fmt.Println("Echo back")
 
 	return nil
-}
-
-func (app *Service) GracefullShutdown() error {
-
-	err := app.db.GracefullShutdown()
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-
 }
