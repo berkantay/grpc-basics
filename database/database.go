@@ -100,7 +100,7 @@ func (s *Storage) CreateUser(ctx context.Context, user *model.User) (*string, er
 }
 
 // Update user in database with given type. Updates only one item.
-func (s *Storage) UpdateUser(ctx context.Context, user *model.User) error {
+func (s *Storage) UpdateUser(ctx context.Context, user *model.User) (*model.User, error) {
 	s.logger.Printf("MongoDB|Updating user [%s]", user)
 	filterID := schemeIDFilter(user.ID)
 	s.logger.Printf("MongoDB|Filter = [%s]", filterID)
@@ -110,14 +110,16 @@ func (s *Storage) UpdateUser(ctx context.Context, user *model.User) error {
 	result := s.collection.FindOneAndUpdate(ctx, filterID, updateDocument)
 	if result.Err() != nil {
 		s.logger.Printf("MongoDB|Update error is  [%s]", result.Err())
-		return result.Err()
+		return nil, result.Err()
 	}
-	s.logger.Printf("MongoDB|Updated user.")
-	return nil
+	update := model.User{}
+	result.Decode(&update)
+	s.logger.Printf("MongoDB|Updated user. [%s]", update)
+	return user, nil
 }
 
 // Remove user in database with corresponding id.
-func (s *Storage) RemoveUser(ctx context.Context, id string) error {
+func (s *Storage) RemoveUser(ctx context.Context, id string) (*string, error) {
 	s.logger.Printf("MongoDB|Removing user id:[%s]", id)
 	filterId := schemeIDFilter(id)
 	//TODO: user id could be checked whether if exists or not in the collection to inform client.
@@ -127,9 +129,10 @@ func (s *Storage) RemoveUser(ctx context.Context, id string) error {
 		})
 	if err != nil {
 		s.logger.Printf("MongoDB|Could not remove [%s] error is: [%s]", id, err)
-		return err
+		return nil, err
 	}
-	return nil
+
+	return &id, nil
 }
 
 // Query users with a filter.
@@ -138,8 +141,9 @@ func (s *Storage) QueryUsers(ctx context.Context, filter *model.UserQuery) ([]mo
 	var results []bson.M
 
 	limit := int64(*filter.Size)
-	// skip := int64(*filter.Page)*limit - limit
-	pipeline := createPipeline(filterBuilder(filter), limit)
+	skip := int64(*filter.Page)*limit - limit
+
+	pipeline := createPipeline(filterBuilder(filter), limit, skip)
 	cur, err := s.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
@@ -173,12 +177,15 @@ func (s *Storage) GracefullShutdown(ctx context.Context) error {
 }
 
 // Creates query pipeline for the aggregation.
-func createPipeline(filter *bson.D, limit int64) []bson.M {
+func createPipeline(filter *bson.D, limit, skip int64) []bson.M {
+
 	pipeline := []bson.M{
 		{"$match": *filter},
 		{"$facet": bson.M{
 			"metadata": []bson.M{
 				{"$count": "total"},
+				{"$limit": limit},
+				{"$skip": skip},
 			},
 			"data": []bson.M{
 				{"$limit": limit},

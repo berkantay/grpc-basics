@@ -18,19 +18,29 @@ service UserAPI {
     rpc HealthCheck(HealthcheckRequest) returns (HealthcheckResponse);
 }
 
+/*User created event content*/
+message CreatedEventNotification{
+    string id =1;           
+    string first_name = 2;  
+    string last_name = 3;    
+    string nick_name = 4;   
+    string password = 5;    
+    string email = 6;       
+    string country = 7;     
+}
+/*Represents response status*/
 message Status{
     string code =1; //Operation status code.
     string message = 2; //Definition of the status code.
 }
-
 /* DeleteUserRequest represents a Delete operation. It deletes user with provided id. */
 message DeleteUserRequest{
     string id = 1; //Which user ID will be deleted?
-
 }
 /* DeleteUserResponse returns status a result of delete operation.*/
 message DeleteUserResponse{
-    Status status = 1; 
+    Status status = 1;
+    string deleted_user_id =2;
 }
 /* CreateUserRequest represents a Create request. It creates user with provided information. */
 message CreateUserRequest{
@@ -99,7 +109,6 @@ message Meta{
 }
 //Used for healthcheck
 message HealthcheckRequest{}
-
 //Healthcheck Response
 message HealthcheckResponse{
     Status status = 1;

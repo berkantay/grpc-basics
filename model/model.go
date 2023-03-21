@@ -31,3 +31,8 @@ type UserPage struct {
 	NumberOfItem int
 	Limit        int
 }
+
+type UserEvent struct {
+	EventName string `json:"event_name,omitempty"`
+	Payload   any    `json:"payload,omitempty"`
+}

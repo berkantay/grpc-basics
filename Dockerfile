@@ -2,14 +2,21 @@ FROM golang:1.19-alpine AS builder
 
 WORKDIR /app
 
+RUN apk add build-base
+RUN apk update && apk add bash ca-certificates git gcc g++ libc-dev librdkafka-dev pkgconf musl
+
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY cmd cmd
-COPY internal internal
-COPY pkg pkg
 
-RUN go build -o user-management-service ./cmd
+COPY cmd cmd
+COPY broker broker
+COPY database database
+COPY grpc grpc
+COPY user user
+COPY model model
+
+RUN go build -tags musl -o user-management-service ./cmd
 
 FROM alpine:3.14
 

@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"net"
@@ -9,29 +10,42 @@ import (
 
 	pb "github.com/berkantay/user-management-service/grpc/proto"
 	"github.com/berkantay/user-management-service/model"
+
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
 	"google.golang.org/grpc"
 )
 
+const (
+	userCreated = "user_created"
+	userDeleted = "user_deleted"
+	userUpdated = "user_updated"
+)
+
 type UserService interface {
 	Create(ctx context.Context, user *model.User) (*string, error)
-	Update(ctx context.Context, user *model.User) error
-	Remove(ctx context.Context, userId string) error
+	Update(ctx context.Context, user *model.User) (*model.User, error)
+	Remove(ctx context.Context, userId string) (*string, error)
 	Query(ctx context.Context, query *model.UserQuery) ([]model.User, error)
+}
+
+type EventPublisher interface {
+	Publish(topic string, payload []byte) error
 }
 
 type Server struct {
 	user UserService
 	pb.UnimplementedUserAPIServer
-	logger *log.Logger
+	logger    *log.Logger
+	publisher EventPublisher
 }
 
-func NewServer(service UserService, logger *log.Logger) *Server {
+func NewServer(service UserService, publisher EventPublisher, logger *log.Logger) *Server {
 	return &Server{
-		user:   service,
-		logger: logger,
+		user:      service,
+		logger:    logger,
+		publisher: publisher,
 	}
 }
 
@@ -84,6 +98,18 @@ func (s *Server) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.Cre
 		}, err
 	}
 
+	t := toEventMessage(userCreated, &pb.UserPayload{
+		Id: *insertionId,
+	})
+
+	go func() {
+		userIdByte, err := json.Marshal(t)
+		if err != nil {
+			s.logger.Println("Could not marshal user create event |", err)
+		}
+		s.publisher.Publish("user", userIdByte)
+	}()
+
 	return &pb.CreateUserResponse{
 		Status: &pb.Status{
 			Code:    "OK",
@@ -98,7 +124,7 @@ func (s *Server) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.Cre
 // Implements DeleteUser function according to proto definition.
 func (s *Server) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
 	s.logger.Printf("gRPC|Deleting user with id[%s]", req.Id)
-	err := s.user.Remove(ctx, req.Id)
+	id, err := s.user.Remove(ctx, req.Id)
 
 	if err != nil {
 		return &pb.DeleteUserResponse{
@@ -109,18 +135,31 @@ func (s *Server) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.Del
 		}, err
 	}
 
+	t := toEventMessage(userDeleted, &pb.UserPayload{
+		Id: *id,
+	})
+
+	go func() {
+		userIdByte, err := json.Marshal(t)
+		if err != nil {
+			s.logger.Println("Could not marshal user create delete |", err)
+		}
+		s.publisher.Publish("user", userIdByte)
+	}()
+
 	return &pb.DeleteUserResponse{
 		Status: &pb.Status{
 			Code:    "OK",
 			Message: "User deleted.",
-		}, //TODO Fill user info from db
+		},
+		DeletedUserId: *id,
 	}, nil
 }
 
 // Implements UpdateUser function according to proto definition.
 func (s *Server) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
 	s.logger.Printf("gRPC|Updating user with [%s]", req)
-	err := s.user.Update(ctx, updateUserRequestToUser(req))
+	update, err := s.user.Update(ctx, updateUserRequestToUser(req))
 
 	if err != nil {
 		return &pb.UpdateUserResponse{
@@ -131,11 +170,29 @@ func (s *Server) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.Upd
 		}, err
 	}
 
+	t := toEventMessage(userUpdated, &pb.UserPayload{
+		Id:        update.ID,
+		FirstName: update.FirstName,
+		LastName:  update.LastName,
+		NickName:  update.NickName,
+		Password:  update.Password,
+		Email:     update.Email,
+		Country:   update.Country,
+	})
+
+	go func() {
+		userIdByte, err := json.Marshal(t)
+		if err != nil {
+			s.logger.Println("Could not marshal user create delete |", err)
+		}
+		s.publisher.Publish("user", userIdByte)
+	}()
+
 	return &pb.UpdateUserResponse{
 		Status: &pb.Status{
 			Code:    "OK",
 			Message: "User updated.",
-		}, //TODO Fill user info from db
+		}, Payload: toUserUpdatePayload(update), //TODO Fill user info from db
 	}, nil
 
 }
@@ -149,7 +206,7 @@ func (s *Server) Query(ctx context.Context, req *pb.QueryUsersRequest) (*pb.Quer
 		return &pb.QueryUsersResponse{
 			Status: &pb.Status{
 				Code:    "INTERNAL",
-				Message: "Internal error occured",
+				Message: "Could not query user",
 			},
 		}, err
 	}
@@ -166,11 +223,12 @@ func (s *Server) Query(ctx context.Context, req *pb.QueryUsersRequest) (*pb.Quer
 	return toPbQueryResponse(user, req), nil
 }
 
+// Check if the service is alive or not.
 func (s *Server) HealthCheck(ctx context.Context, req *pb.HealthcheckRequest) (*pb.HealthcheckResponse, error) {
 	return &pb.HealthcheckResponse{
 		Status: &pb.Status{
 			Code:    "OK",
-			Message: "Service alive.",
+			Message: "User service alive.",
 		},
 	}, nil
 }
@@ -253,7 +311,27 @@ func toPbQueryResponse(users []model.User, req *pb.QueryUsersRequest) *pb.QueryU
 	}
 }
 
+func toUserUpdatePayload(update *model.User) *pb.UserPayload {
+	return &pb.UserPayload{
+		Id:        update.ID,
+		FirstName: update.FirstName,
+		LastName:  update.LastName,
+		NickName:  update.NickName,
+		//password nil?
+		Email:   update.Email,
+		Country: update.Country,
+	}
+
+}
+
 func checkIsValidMail(email string) bool {
 	_, err := mail.ParseAddress(email)
 	return err == nil
+}
+
+func toEventMessage(eventName string, payload any) *model.UserEvent {
+	return &model.UserEvent{
+		EventName: eventName,
+		Payload:   payload,
+	}
 }

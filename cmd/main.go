@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/berkantay/user-management-service/broker"
 	"github.com/berkantay/user-management-service/database"
 	"github.com/berkantay/user-management-service/grpc"
 	"github.com/berkantay/user-management-service/user"
@@ -36,6 +37,13 @@ func main() {
 
 	application := user.NewService(database, logger)
 
-	server := grpc.NewServer(application, logger)
+	publisher, err := broker.NewBrokerHandler(logger)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	server := grpc.NewServer(application, publisher, logger)
+
 	server.Run()
 }

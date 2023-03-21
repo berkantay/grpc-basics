@@ -1,17 +1,29 @@
+# User management service
+
 ## Instructions
 
 Assuming you are on the project directory and Docker is installed.
 
 ### Docker
 
-First we build the container image for our microservice
-`DOCKER_BUILDKIT=0 docker build -t user-management-service .`. After docker building process is completed succesfully, `docker compose up` optionally `docker compose up -d` (if you want to run it as background daemon).
+For Apple M1 users :
+`sudo docker buildx build -t user-management-service:latest --platform=linux/arm64 . --load`
+For **amd64** we build the container image for our microservice
+`DOCKER_BUILDKIT=0 docker build -t user-management-service:latest .`.
+After docker building process is completed succesfully,
+`docker compose up`
+optionally (if you want to run it as background daemon).
+`docker compose up -d` .
 Then **user-management-service** should be ready to make CRUD operations on it.
 
 ### Local
 
-If `export MONGO_URL=<mongo_url:mongo_port>`set, program will use it otherwise `mongodb://127.0.0.1:27017` is the default url. To build application locally first make sure that mongo instance is running on the system.
-Use `go build cmd/main.go -o user-management-service`. Finally application is ready to be used with `./user-management-service`.
+If `export MONGO_URL=<mongo_url:mongo_port>`set, program will use it. Otherwise `mongodb://127.0.0.1:27017` is the default url.
+Additionally :
+`export KAFKA_URL=<kafka_url>:<kafka_port>`
+To run the application locally first make sure that mongo instance is running on the system.
+Use `go build cmd/main.go -o user-management-service`.
+Finally application is ready to be used with `./user-management-service`.
 
 ### Why Hexagonal Architecture?
 
@@ -21,9 +33,9 @@ By implementing hexagonal architecture basic API functionality could easily be d
 
 First of all great documentation. Since this is the first time I used MongoDB, documentation has huge effect on database selection. It is also NoSQL which makes it easy to generate data and play with it.
 
-### Docker
+### Why Kafka?
 
-I also implemented a multistaged dockerfile to keep footprint of image small and standalone binary.
+Kafka is used to produce events and let other interested servers notified about the changes. Since kafka is well documented, easily built up I preferred Kafka to uses broker.
 
 ## Improvements
 

@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -13,8 +12,8 @@ import (
 
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *model.User) (*string, error)
-	UpdateUser(ctx context.Context, user *model.User) error
-	RemoveUser(ctx context.Context, id string) error
+	UpdateUser(ctx context.Context, user *model.User) (*model.User, error)
+	RemoveUser(ctx context.Context, id string) (*string, error)
 	QueryUsers(ctx context.Context, filter *model.UserQuery) ([]model.User, error)
 	HealthCheck(ctx context.Context) error
 }
@@ -59,35 +58,34 @@ func (service *Service) Create(ctx context.Context, user *model.User) (*string, 
 }
 
 // Updates user.
-func (service *Service) Update(ctx context.Context, user *model.User) error {
+func (service *Service) Update(ctx context.Context, user *model.User) (*model.User, error) {
 	service.logger.Printf("Update called with[%s]", *user)
-	err := service.db.UpdateUser(ctx, user)
+	update, err := service.db.UpdateUser(ctx, user)
 	if err != nil {
 		service.logger.Printf("Could not update user[%s]", err)
-		return err
+		return nil, err
 	}
-	service.logger.Printf("User updated with id[%s]", user)
+	service.logger.Printf("User updated with [%s]", update)
 
-	return nil
+	return update, nil
 }
 
 // Remove user by given id.
-func (service *Service) Remove(ctx context.Context, userId string) error {
+func (service *Service) Remove(ctx context.Context, userId string) (*string, error) {
 	service.logger.Printf("Remove called with[%s]", userId)
-	err := service.db.RemoveUser(ctx, userId)
+	id, err := service.db.RemoveUser(ctx, userId)
 	service.logger.Printf("User removed with id[%s]", userId)
 	if err != nil {
 		service.logger.Printf("Could not remove user[%s]", err)
-		return err
+		return nil, err
 	}
-	return nil
+	return id, nil
 }
 
 // Query user for the given UserQuery, return list of users after query operation and error if exists.
 func (service *Service) Query(ctx context.Context, query *model.UserQuery) ([]model.User, error) {
 	service.logger.Printf("Query called for")
 	users, err := service.db.QueryUsers(ctx, query)
-	fmt.Println(users)
 	if err != nil {
 		service.logger.Printf("User could not queried[%v]", &query)
 		return nil, err
