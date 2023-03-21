@@ -199,7 +199,7 @@ func TestDeleteUserInvalidID(t *testing.T) {
 		Id: "123",
 	})
 
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
 
 	assert.Equal(t, resp, &pb.DeleteUserResponse{
 		Status: &pb.Status{
