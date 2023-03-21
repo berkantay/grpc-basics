@@ -19,7 +19,7 @@ Then **user-management-service** should be ready to make CRUD operations on it.
 ### Local
 
 If `export MONGO_URL=<mongo_url:mongo_port>`set, program will use it. Otherwise `mongodb://127.0.0.1:27017` is the default url.
-Additionally :
+Additionally **MUST** :
 `export KAFKA_URL=<kafka_url>:<kafka_port>`
 To run the application locally first make sure that mongo instance is running on the system.
 Use `go build cmd/main.go -o user-management-service`.

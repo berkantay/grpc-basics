@@ -33,6 +33,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer database.GracefullShutdown(context.Background())
 
 	application := user.NewService(database, logger)
