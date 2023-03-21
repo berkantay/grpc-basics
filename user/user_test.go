@@ -23,7 +23,7 @@ func (m *mockUserRepository) UpdateUser(ctx context.Context, user *model.User) (
 	return user, nil
 }
 
-func (m *mockUserRepository) RemoveUser(ctx context.Context, id string) (*string, error) {
+func (m *mockUserRepository) DeleteUser(ctx context.Context, id string) (*string, error) {
 	return &id, nil
 }
 
@@ -85,16 +85,16 @@ func TestUserServiceUpdate(t *testing.T) {
 	}
 }
 
-func TestUserServiceRemove(t *testing.T) {
+func TestUserServiceDelete(t *testing.T) {
 	userService := NewService(&mockUserRepository{}, log.Default())
 
 	ctx := context.Background()
-	removedId, err := userService.Remove(ctx, "123")
+	deletedId, err := userService.Delete(ctx, "123")
 	if err != nil {
-		t.Fatalf("Remove returned unexpected error: %v", err)
+		t.Fatalf("Delete returned unexpected error: %v", err)
 	}
-	if *removedId != "123" {
-		t.Errorf("Remove returned unexpected ID: %s", *removedId)
+	if *deletedId != "123" {
+		t.Errorf("Delete returned unexpected ID: %s", *deletedId)
 	}
 }
 

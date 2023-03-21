@@ -26,7 +26,7 @@ const (
 type UserService interface {
 	Create(ctx context.Context, user *model.User) (*string, error)
 	Update(ctx context.Context, user *model.User) (*model.User, error)
-	Remove(ctx context.Context, userId string) (*string, error)
+	Delete(ctx context.Context, userId string) (*string, error)
 	Query(ctx context.Context, query *model.UserQuery) ([]model.User, error)
 }
 
@@ -123,7 +123,7 @@ func (s *Server) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.Cre
 // Implements DeleteUser function according to proto definition.
 func (s *Server) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
 	s.logger.Printf("gRPC|Deleting user with id[%s]", req.Id)
-	id, err := s.user.Remove(ctx, req.Id)
+	id, err := s.user.Delete(ctx, req.Id)
 
 	if err != nil {
 		return &pb.DeleteUserResponse{
@@ -131,12 +131,14 @@ func (s *Server) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.Del
 				Code:    "INTERNAL",
 				Message: "Could not delete user. User not found",
 			},
-		}, err
+		}, nil //TODO: Check if err should return or not?
 	}
 
 	t := toEventMessage(userDeleted, &pb.UserPayload{
 		Id: *id,
 	})
+
+	log.Println(t)
 
 	go func() {
 		userIdByte, err := json.Marshal(t)
@@ -151,7 +153,9 @@ func (s *Server) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.Del
 			Code:    "OK",
 			Message: "User deleted.",
 		},
-		DeletedUserId: *id,
+		UserIdResponse: &pb.UserIdResponse{
+			Id: *id,
+		},
 	}, nil
 }
 
@@ -159,6 +163,17 @@ func (s *Server) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.Del
 func (s *Server) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
 	s.logger.Printf("gRPC|Updating user with [%s]", req)
 	update, err := s.user.Update(ctx, updateUserRequestToUser(req))
+
+	isValidEmail := checkIsValidMail(req.Email)
+	s.logger.Printf("Email is [%t]", isValidEmail)
+	if !isValidEmail {
+		return &pb.UpdateUserResponse{
+			Status: &pb.Status{
+				Code:    "INVALID_ARGUMENT",
+				Message: "Invalid email.",
+			},
+		}, errors.New("invalid email")
+	}
 
 	if err != nil {
 		return &pb.UpdateUserResponse{
@@ -202,6 +217,7 @@ func (s *Server) Query(ctx context.Context, req *pb.QueryUsersRequest) (*pb.Quer
 	user, err := s.user.Query(ctx, toUserQuery(req))
 
 	if err != nil {
+		s.logger.Printf("gRPC|Query error [%s]", err)
 		return &pb.QueryUsersResponse{
 			Status: &pb.Status{
 				Code:    "INTERNAL",

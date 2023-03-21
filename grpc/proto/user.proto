@@ -40,7 +40,7 @@ message DeleteUserRequest{
 /* DeleteUserResponse returns status a result of delete operation.*/
 message DeleteUserResponse{
     Status status = 1;
-    string deleted_user_id =2;
+    UserIdResponse user_id_response = 2;
 }
 /* CreateUserRequest represents a Create request. It creates user with provided information. */
 message CreateUserRequest{
@@ -101,11 +101,14 @@ message QueryUsersResponse{
     repeated UserPayload payload =2;    //Query payload
     Meta meta = 3;                      
 }
-
 message Meta{
     int64 page = 1;                 //Page number
     int64 size = 2;                 //Page size
     optional int64 next_page = 3;   //Next page 
+}
+/* Query meta information */
+message UserIdResponse{
+   string id = 1;
 }
 //Used for healthcheck
 message HealthcheckRequest{}

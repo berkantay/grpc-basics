@@ -39,7 +39,7 @@ func (s UserServiceMock) Update(ctx context.Context, user *model.User) (*model.U
 	return user, errors.New("mock mismatch id")
 }
 
-func (s UserServiceMock) Remove(ctx context.Context, userId string) (*string, error) {
+func (s UserServiceMock) Delete(ctx context.Context, userId string) (*string, error) {
 	// Return the input user ID as is.
 	if userId == "test-id" {
 		return stringPtr("test-id"), nil
@@ -181,7 +181,9 @@ func TestDeleteUserValidID(t *testing.T) {
 			Code:    "OK",
 			Message: "User deleted.",
 		},
-		DeletedUserId: "test-id",
+		UserIdResponse: &pb.UserIdResponse{
+			Id: "test-id",
+		},
 	})
 }
 

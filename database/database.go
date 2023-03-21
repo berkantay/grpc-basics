@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/berkantay/user-management-service/model"
@@ -10,6 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type Storage struct {
@@ -118,18 +119,15 @@ func (s *Storage) UpdateUser(ctx context.Context, user *model.User) (*model.User
 	return user, nil
 }
 
-// Remove user in database with corresponding id.
-func (s *Storage) RemoveUser(ctx context.Context, id string) (*string, error) {
-	s.logger.Printf("MongoDB|Removing user id:[%s]", id)
+// Delete user in database with corresponding id.
+func (s *Storage) DeleteUser(ctx context.Context, id string) (*string, error) {
+	s.logger.Printf("MongoDB|Check database for delete operation of user id:[%s]", id)
 	filterId := schemeIDFilter(id)
 	//TODO: user id could be checked whether if exists or not in the collection to inform client.
-	_, err := s.collection.DeleteOne(ctx, filterId,
-		&options.DeleteOptions{
-			Comment: fmt.Sprintf("%s document is deleted from the collection", filterId),
-		})
-	if err != nil {
-		s.logger.Printf("MongoDB|Could not remove [%s] error is: [%s]", id, err)
-		return nil, err
+	res := s.collection.FindOneAndDelete(ctx, filterId)
+	if res.Err() != nil {
+		s.logger.Printf("MongoDB|Could not delete [%s] error is: [%s]", id, res.Err())
+		return nil, res.Err()
 	}
 
 	return &id, nil
@@ -201,10 +199,12 @@ func filterBuilder(filter *model.UserQuery) *bson.D {
 	f := bson.D{}
 
 	if filter.FirstName != nil {
-		f = append(f, bson.E{Key: "first_name", Value: *filter.FirstName})
+		titleCased := cases.Title(language.English, cases.Compact).String(*filter.FirstName)
+		f = append(f, bson.E{Key: "first_name", Value: titleCased})
 	}
 	if filter.LastName != nil {
-		f = append(f, bson.E{Key: "last_name", Value: *filter.LastName})
+		titleCased := cases.Title(language.English, cases.Compact).String(*filter.LastName)
+		f = append(f, bson.E{Key: "last_name", Value: titleCased})
 	}
 	if filter.NickName != nil {
 		f = append(f, bson.E{Key: "nickname", Value: *filter.NickName})

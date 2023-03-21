@@ -13,7 +13,7 @@ import (
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *model.User) (*string, error)
 	UpdateUser(ctx context.Context, user *model.User) (*model.User, error)
-	RemoveUser(ctx context.Context, id string) (*string, error)
+	DeleteUser(ctx context.Context, id string) (*string, error)
 	QueryUsers(ctx context.Context, filter *model.UserQuery) ([]model.User, error)
 }
 
@@ -36,7 +36,7 @@ func (service *Service) Create(ctx context.Context, user *model.User) (*string, 
 	user.ID = uuid.NewString()
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
-	service.logger.Printf("Wrapped to[%s]", *user)
+	service.logger.Printf("User wrapped to[%s]", *user)
 
 	hashed, err := hashPassword(user.Password)
 	if err != nil {
@@ -51,7 +51,6 @@ func (service *Service) Create(ctx context.Context, user *model.User) (*string, 
 		return nil, err
 	}
 	service.logger.Printf("User created with id[%s]", *insertionId)
-
 	return insertionId, nil
 
 }
@@ -65,30 +64,30 @@ func (service *Service) Update(ctx context.Context, user *model.User) (*model.Us
 		return nil, err
 	}
 	service.logger.Printf("User updated with [%s]", update)
-
 	return update, nil
 }
 
 // Remove user by given id.
-func (service *Service) Remove(ctx context.Context, userId string) (*string, error) {
-	service.logger.Printf("Remove called with[%s]", userId)
-	id, err := service.db.RemoveUser(ctx, userId)
-	service.logger.Printf("User removed with id[%s]", userId)
+func (service *Service) Delete(ctx context.Context, userId string) (*string, error) {
+	service.logger.Printf("Delete called with[%s]", userId)
+	id, err := service.db.DeleteUser(ctx, userId)
 	if err != nil {
-		service.logger.Printf("Could not remove user[%s]", err)
+		service.logger.Printf("Could not delete user[%s]", err)
 		return nil, err
 	}
+	service.logger.Printf("User deleted with id[%s]", userId)
 	return id, nil
 }
 
 // Query user for the given UserQuery, return list of users after query operation and error if exists.
 func (service *Service) Query(ctx context.Context, query *model.UserQuery) ([]model.User, error) {
-	service.logger.Printf("Query called for")
+	service.logger.Printf("Query called")
 	users, err := service.db.QueryUsers(ctx, query)
 	if err != nil {
 		service.logger.Printf("User could not queried[%v]", &query)
 		return nil, err
 	}
+	service.logger.Printf("Query result [%v]", &query)
 	return users, nil
 }
 
