@@ -3,6 +3,7 @@
 ## Instructions
 
 Assuming you are on the project directory and Docker is installed.
+Also assuming that all of the information sent defined in the protobuf.
 
 ### Docker
 
@@ -24,6 +25,15 @@ Additionally **MUST** :
 To run the application locally first make sure that mongo instance is running on the system.
 Use `go build cmd/main.go -o user-management-service`.
 Finally application is ready to be used with `./user-management-service`.
+
+### Events
+
+After `docker compose` is up and running. Service will be alive to respond client requests. When user send an operation request:
+Events can be seen,
+
+- Run `docker exec -it broker /bin/bash` to fall into bash of Kafka image.
+- Change directory to `cd /bin`. Here we have the builtin tools to monitor messages provided by Kafka.
+- Run to `kafka-console-consumer --bootstrap-server localhost:9092 --topic user --from-beginning`. To see which events have been published.
 
 ### Why Hexagonal Architecture?
 

@@ -86,7 +86,6 @@ func (s *Server) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.Cre
 			},
 		}, errors.New("invalid email")
 	}
-
 	insertionId, err := s.user.Create(ctx, wrappedMessage)
 
 	if err != nil {
@@ -117,7 +116,7 @@ func (s *Server) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.Cre
 		},
 		Payload: &pb.UserPayload{
 			Id: *insertionId,
-		}, //TODO Fill user info from db
+		},
 	}, nil
 }
 
@@ -130,7 +129,7 @@ func (s *Server) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.Del
 		return &pb.DeleteUserResponse{
 			Status: &pb.Status{
 				Code:    "INTERNAL",
-				Message: "Could not delete user.",
+				Message: "Could not delete user. User not found",
 			},
 		}, err
 	}
@@ -317,11 +316,9 @@ func toUserUpdatePayload(update *model.User) *pb.UserPayload {
 		FirstName: update.FirstName,
 		LastName:  update.LastName,
 		NickName:  update.NickName,
-		//password nil?
-		Email:   update.Email,
-		Country: update.Country,
+		Email:     update.Email,
+		Country:   update.Country,
 	}
-
 }
 
 func checkIsValidMail(email string) bool {

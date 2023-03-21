@@ -15,7 +15,6 @@ type UserRepository interface {
 	UpdateUser(ctx context.Context, user *model.User) (*model.User, error)
 	RemoveUser(ctx context.Context, id string) (*string, error)
 	QueryUsers(ctx context.Context, filter *model.UserQuery) ([]model.User, error)
-	HealthCheck(ctx context.Context) error
 }
 
 type Service struct {

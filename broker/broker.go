@@ -22,7 +22,7 @@ func NewBrokerHandler(logger *log.Logger) (*BrokerHandler, error) {
 		logger.Printf("Kafka|Could not connect to kafka [%s]", err)
 		return nil, err
 	}
-	logger.Println("Connected ")
+	logger.Printf("Kafka|Connected to [%s]", os.Getenv("KAFKA_URL"))
 
 	return &BrokerHandler{
 		producer: producer,
@@ -36,9 +36,9 @@ func (bh *BrokerHandler) Publish(topic string, payload []byte) error {
 		Value:          payload},
 		nil,
 	)
-	bh.logger.Println("Kafka|Published..")
+	bh.logger.Println("Kafka|Event published")
 	if err != nil {
-		bh.logger.Println("Kafka|Could not publish message to kafka..")
+		bh.logger.Println("Kafka|Could not publish event.")
 		return err
 	}
 	return nil
