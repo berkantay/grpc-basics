@@ -51,34 +51,35 @@ func NewServer(service UserService, publisher EventPublisher, logger *log.Logger
 
 // Run the gRPC server.
 func (s *Server) Run() {
-	s.logger.Printf("gRPC|Connecting tcp socket..")
+	s.logger.Printf("INFO:gRPC|Connecting tcp socket..")
 	listen, err := net.Listen("tcp", ":8080")
 	if err != nil {
-		s.logger.Printf("failed to listen on port 8080 [%v]", err)
+		s.logger.Printf("ERROR:gRPC|failed to listen on port 8080 | [%v]", err)
 	}
 
 	userManagementService := s
 
 	grpcServer := grpc.NewServer()
-	s.logger.Printf("gRPC|Registering to User API")
+	s.logger.Printf("INFO:gRPC|Registering to User API")
 	pb.RegisterUserAPIServer(grpcServer, userManagementService)
-	s.logger.Printf("gRPC|Registered to User API")
+	s.logger.Printf("INFO:gRPC|Registered to User API")
 
-	s.logger.Printf("gRPC|Binding TCP Socket")
+	s.logger.Printf("INFO:gRPC|Binding TCP Socket")
 	grpcServer.Serve(listen)
-	s.logger.Printf("gRPC|Binded")
+	s.logger.Printf("INFO:gRPC|Binded")
 	defer grpcServer.Stop()
 
 }
 
 // Implements CreateUser function according to proto definition.
 func (s *Server) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	s.logger.Printf("INFO:gRPC|Create called")
 	wrappedMessage := createUserRequestToUser(req)
-	s.logger.Printf("gRPC|Request converted to user model[%s]", wrappedMessage)
+	s.logger.Printf("INFO:gRPC|Request converted to user model")
+	s.logger.Printf("INFO:gRPC|Checking if email is valid")
 	isValidEmail := checkIsValidMail(req.Email)
-	s.logger.Printf("Email is [%t]", isValidEmail)
-
 	if !isValidEmail {
+		s.logger.Printf("WARNING:gRPC|Invalid email")
 		return &pb.CreateUserResponse{
 			Status: &pb.Status{
 				Code:    "INVALID_ARGUMENT",
@@ -87,8 +88,8 @@ func (s *Server) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.Cre
 		}, errors.New("invalid email")
 	}
 	insertionId, err := s.user.Create(ctx, wrappedMessage)
-
 	if err != nil {
+		s.logger.Printf("ERROR:gRPC|Could not create user. [%s]", err)
 		return &pb.CreateUserResponse{
 			Status: &pb.Status{
 				Code:    "INTERNAL",
@@ -104,11 +105,11 @@ func (s *Server) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.Cre
 	go func() {
 		userIdByte, err := json.Marshal(t)
 		if err != nil {
-			s.logger.Println("Could not marshal user create event |", err)
+			s.logger.Printf("ERROR:gRPC|Could not marshal user create. [%s]", err)
 		}
 		s.publisher.Publish("user", userIdByte)
 	}()
-
+	s.logger.Printf("INFO:gRPC|User created.")
 	return &pb.CreateUserResponse{
 		Status: &pb.Status{
 			Code:    "OK",
@@ -122,10 +123,11 @@ func (s *Server) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.Cre
 
 // Implements DeleteUser function according to proto definition.
 func (s *Server) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
-	s.logger.Printf("gRPC|Deleting user with id[%s]", req.Id)
+	s.logger.Printf("INFO:gRPC|Delete user called")
 	id, err := s.user.Delete(ctx, req.Id)
 
 	if err != nil {
+		s.logger.Printf("ERROR:gRPC|Could not delete user. [%s]", err)
 		return &pb.DeleteUserResponse{
 			Status: &pb.Status{
 				Code:    "INTERNAL",
@@ -137,17 +139,14 @@ func (s *Server) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.Del
 	t := toEventMessage(userDeleted, &pb.UserPayload{
 		Id: *id,
 	})
-
-	log.Println(t)
-
 	go func() {
 		userIdByte, err := json.Marshal(t)
 		if err != nil {
-			s.logger.Println("Could not marshal user create delete |", err)
+			s.logger.Printf("ERROR:gRPC|Could not marshal delete. [%s]", err)
 		}
 		s.publisher.Publish("user", userIdByte)
 	}()
-
+	s.logger.Printf("INFO:gRPC|User deleted.")
 	return &pb.DeleteUserResponse{
 		Status: &pb.Status{
 			Code:    "OK",
@@ -161,12 +160,12 @@ func (s *Server) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.Del
 
 // Implements UpdateUser function according to proto definition.
 func (s *Server) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-	s.logger.Printf("gRPC|Updating user with [%s]", req)
+	s.logger.Printf("INFO:gRPC|Updat called")
 	update, err := s.user.Update(ctx, updateUserRequestToUser(req))
-
+	s.logger.Printf("INFO:gRPC|Checking if email is valid")
 	isValidEmail := checkIsValidMail(req.Email)
-	s.logger.Printf("Email is [%t]", isValidEmail)
 	if !isValidEmail {
+		s.logger.Printf("WARNING:gRPC|Invalid email")
 		return &pb.UpdateUserResponse{
 			Status: &pb.Status{
 				Code:    "INVALID_ARGUMENT",
@@ -176,6 +175,7 @@ func (s *Server) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.Upd
 	}
 
 	if err != nil {
+		s.logger.Printf("ERROR:gRPC|Could not update user. [%s]", err)
 		return &pb.UpdateUserResponse{
 			Status: &pb.Status{
 				Code:    "INTERNAL",
@@ -197,27 +197,27 @@ func (s *Server) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.Upd
 	go func() {
 		userIdByte, err := json.Marshal(t)
 		if err != nil {
-			s.logger.Println("Could not marshal user create delete |", err)
+			s.logger.Printf("ERROR:gRPC|Could not marshal user update. [%s]", err)
 		}
 		s.publisher.Publish("user", userIdByte)
 	}()
-
+	s.logger.Println("INFO:gRPC|User updated")
 	return &pb.UpdateUserResponse{
 		Status: &pb.Status{
 			Code:    "OK",
 			Message: "User updated.",
-		}, Payload: toUserUpdatePayload(update), //TODO Fill user info from db
+		}, Payload: toUserUpdatePayload(update),
 	}, nil
 
 }
 
 // Implements QueryUsers function according to proto definition.
 func (s *Server) Query(ctx context.Context, req *pb.QueryUsersRequest) (*pb.QueryUsersResponse, error) {
-	s.logger.Printf("gRPC|Query called")
+	s.logger.Printf("INFO:gRPC|Query called.")
 	user, err := s.user.Query(ctx, toUserQuery(req))
 
 	if err != nil {
-		s.logger.Printf("gRPC|Query error [%s]", err)
+		s.logger.Printf("ERROR:gRPC|Query error. [%s]", err)
 		return &pb.QueryUsersResponse{
 			Status: &pb.Status{
 				Code:    "INTERNAL",
@@ -227,6 +227,7 @@ func (s *Server) Query(ctx context.Context, req *pb.QueryUsersRequest) (*pb.Quer
 	}
 
 	if user == nil {
+		s.logger.Printf("WARNING:gRPC|Could not found user.")
 		return &pb.QueryUsersResponse{
 			Status: &pb.Status{
 				Code:    "NOT_FOUND",
@@ -234,7 +235,7 @@ func (s *Server) Query(ctx context.Context, req *pb.QueryUsersRequest) (*pb.Quer
 			},
 		}, err
 	}
-
+	s.logger.Printf("INFO:gRPC|Query done.")
 	return toPbQueryResponse(user, req), nil
 }
 

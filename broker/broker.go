@@ -13,16 +13,16 @@ type BrokerHandler struct {
 }
 
 func NewBrokerHandler(logger *log.Logger) (*BrokerHandler, error) {
-	logger.Printf("Connecting to kafka.. [%s]", os.Getenv("KAFKA_URL"))
+	logger.Printf("INFO:Connecting to kafka.. [%s]", os.Getenv("KAFKA_URL"))
 	producer, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": os.Getenv("KAFKA_URL"),
 		"acks":              "all"})
 
 	if err != nil {
-		logger.Printf("Kafka|Could not connect to kafka [%s]", err)
+		logger.Printf("ERROR:Kafka|Could not connect to kafka [%s]", err)
 		return nil, err
 	}
-	logger.Printf("Kafka|Connected to [%s]", os.Getenv("KAFKA_URL"))
+	logger.Printf("INFO:Kafka|Connected to [%s]", os.Getenv("KAFKA_URL"))
 
 	return &BrokerHandler{
 		producer: producer,
@@ -36,9 +36,9 @@ func (bh *BrokerHandler) Publish(topic string, payload []byte) error {
 		Value:          payload},
 		nil,
 	)
-	bh.logger.Println("Kafka|Event published")
+	bh.logger.Println("INFO:Kafka|Event published")
 	if err != nil {
-		bh.logger.Println("Kafka|Could not publish event.")
+		bh.logger.Println("ERROR:Kafka|Could not publish event.")
 		return err
 	}
 	return nil

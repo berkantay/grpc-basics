@@ -56,17 +56,17 @@ func NewStorage(opts ...StorageOption) (*Storage, error) {
 	}
 
 	clientOptions := options.Client().ApplyURI(s.host)
-	s.logger.Printf("MongoDB|Connecting..")
+	s.logger.Printf("INFO:MongoDB|Connecting..")
 	client, err := mongo.Connect(s.context, clientOptions)
-	s.logger.Printf("MongoDB|Connected..")
+	s.logger.Printf("INFO:MongoDB|Connected..")
 	if err != nil {
-		s.logger.Printf("MongoDB|Could not connected [%s]", err)
+		s.logger.Printf("ERROR:MongoDB|Could not connected [%s]", err)
 		return nil, err
 	}
 	s.client = client
-	s.logger.Printf("MongoDB|Creating collection..")
+	s.logger.Printf("INFO:MongoDB|Creating collection..")
 	s.collection = s.createCollection("user", "information")
-	s.logger.Printf("MongoDB|Created collection..")
+	s.logger.Printf("INFO:MongoDB|Created collection..")
 	return s, nil
 }
 
@@ -79,63 +79,62 @@ func (s *Storage) createCollection(database, collection string) *mongo.Collectio
 func (s *Storage) HealthCheck(ctx context.Context) error {
 	err := s.client.Ping(ctx, nil)
 	if err != nil {
-		log.Println(err)
+		s.logger.Printf("ERROR:MongoDB|Database is NOT alive..")
 		return err
 	}
-	s.logger.Printf("MongoDB|Database alive..")
+	s.logger.Printf("INFO:MongoDB|Database alive..")
 	return nil
 }
 
 // Create user in database with given type.
 func (s *Storage) CreateUser(ctx context.Context, user *model.User) (*string, error) {
 	//TODO: user id could be checked whether if exists or not. If exists generate another uuid to keep uniqueness.
-	s.logger.Printf("MongoDB|Inserting user [%s]", user)
+	s.logger.Printf("INFO:MongoDB|Creating user.")
 	res, err := s.collection.InsertOne(ctx, user)
 	if err != nil {
-		s.logger.Printf("MongoDB|Could not insert entry [%s]", err)
+		s.logger.Printf("ERROR:MongoDB|Could not create user. [%s]", err)
 		return nil, err
 	}
 	insertionId := res.InsertedID.(string)
-	s.logger.Printf("MongoDB|Insertion succesfull [%s]", insertionId)
+	s.logger.Printf("INFO:MongoDB|Creation successful.[%s]", insertionId)
 	return &insertionId, nil
 }
 
 // Update user in database with given type. Updates only one item.
 func (s *Storage) UpdateUser(ctx context.Context, user *model.User) (*model.User, error) {
-	s.logger.Printf("MongoDB|Updating user [%s]", user)
+	s.logger.Printf("INFO:MongoDB|Updating user")
 	filterID := schemeIDFilter(user.ID)
-	s.logger.Printf("MongoDB|Filter = [%s]", filterID)
+	s.logger.Printf("INFO:MongoDB|Filtering on = [%s]", filterID)
 	updateDocument := bson.M{
 		"$set": toUserBson(user),
 	}
 	result := s.collection.FindOneAndUpdate(ctx, filterID, updateDocument)
 	if result.Err() != nil {
-		s.logger.Printf("MongoDB|Update error is  [%s]", result.Err())
+		s.logger.Printf("ERROR:MongoDB|Update error is  [%s]", result.Err())
 		return nil, result.Err()
 	}
 	update := model.User{}
 	result.Decode(&update)
-	s.logger.Printf("MongoDB|Updated user. [%s]", update)
+	s.logger.Printf("INFO:MongoDB|Update successful user. [%s]", update.ID)
 	return user, nil
 }
 
 // Delete user in database with corresponding id.
 func (s *Storage) DeleteUser(ctx context.Context, id string) (*string, error) {
-	s.logger.Printf("MongoDB|Check database for delete operation of user id:[%s]", id)
+	s.logger.Printf("INFO:MongoDB|Deleting user with id:[%s]", id)
 	filterId := schemeIDFilter(id)
-	//TODO: user id could be checked whether if exists or not in the collection to inform client.
 	res := s.collection.FindOneAndDelete(ctx, filterId)
 	if res.Err() != nil {
-		s.logger.Printf("MongoDB|Could not delete [%s] error is: [%s]", id, res.Err())
+		s.logger.Printf("ERROR:MongoDB|Could not delete [%s] error is: [%s]", id, res.Err())
 		return nil, res.Err()
 	}
-
+	s.logger.Printf("INFO:MongoDB|Delete successful.")
 	return &id, nil
 }
 
 // Query users with a filter.
 func (s *Storage) QueryUsers(ctx context.Context, filter *model.UserQuery) ([]model.User, error) {
-	s.logger.Printf("MongoDB|Querying user")
+	s.logger.Printf("INFO:MongoDB|Querying user.")
 	var results []bson.M
 
 	limit := int64(*filter.Size)
@@ -144,29 +143,29 @@ func (s *Storage) QueryUsers(ctx context.Context, filter *model.UserQuery) ([]mo
 	pipeline := createPipeline(filterBuilder(filter), limit, skip)
 	cur, err := s.collection.Aggregate(ctx, pipeline)
 	if err != nil {
+		s.logger.Printf("ERROR:MongoDB|Aggregation error [%s]", err)
 		return nil, err
 	}
 	if err = cur.All(context.TODO(), &results); err != nil {
-		panic(err)
+		s.logger.Printf("ERROR:MongoDB|Cursor error [%s]", err)
+		return nil, err
 	}
 
 	res, err := fromBsonToUser(results)
 
-	s.logger.Printf("MongoDB|Query result [%s]", res)
-
 	if err != nil {
-		s.logger.Printf("MongoDB|Could not convert BSON to User model. Error is: [%s]", err)
+		s.logger.Printf("ERROR:MongoDB|Could not convert BSON to User model. Error is: [%s]", err)
 		return nil, err
 	}
-
+	s.logger.Printf("INFO:MongoDB|Query result")
 	return res, nil
 }
 
 // Disconnect from database.
 func (s *Storage) GracefullShutdown(ctx context.Context) error {
-	s.logger.Printf("MongoDB|Shutting down..")
+	s.logger.Printf("INFO:MongoDB|Shutting down..")
 	err := s.client.Disconnect(ctx)
-	s.logger.Printf("MongoDB|Closed.")
+	s.logger.Printf("INFO:MongoDB|Closed.")
 	if err != nil {
 		return err
 	}

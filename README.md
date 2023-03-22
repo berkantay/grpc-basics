@@ -47,6 +47,10 @@ First of all great documentation. Since this is the first time I used MongoDB, d
 
 Kafka is used to produce events and let other interested servers notified about the changes. Since kafka is well documented, easily built up I preferred Kafka to uses broker.
 
+## Logging
+
+Logs do not include user information because of the security concern.
+
 ## Improvements
 
 ### Scaling
