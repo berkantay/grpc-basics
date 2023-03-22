@@ -60,3 +60,10 @@ From vertical scaling perspective increasing the machine specs would help which 
 ### Deployment
 
 An automated CI/CD pipeline to run tests and deployment could be added. After deployment monitoring tools could be added to collect, analyze and debug services.
+
+## Screemshot
+
+Server
+![plot](resources/Screenshot%202023-03-22%20at%2009.11.23.png)
+Client
+![plot](resources/Screenshot%202023-03-22%20at%2009.14.25.png)

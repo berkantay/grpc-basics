@@ -134,7 +134,7 @@ func (s *Storage) DeleteUser(ctx context.Context, id string) (*string, error) {
 
 // Query users with a filter.
 func (s *Storage) QueryUsers(ctx context.Context, filter *model.UserQuery) ([]model.User, error) {
-	s.logger.Printf("INFO:MongoDB|Querying user.")
+	s.logger.Printf("INFO:MongoDB|Querying user with given filter")
 	var results []bson.M
 
 	limit := int64(*filter.Size)
