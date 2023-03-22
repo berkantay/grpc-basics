@@ -35,13 +35,17 @@ Events can be seen,
 - Change directory to `cd /bin`. Here we have the builtin tools to monitor messages provided by Kafka.
 - Run to `kafka-console-consumer --bootstrap-server localhost:9092 --topic user --from-beginning`. To see which events have been published.
 
+# Choises
+
+I tried to keep OSS dependency low. Better frameworks for log management, parsing exists etc.. according to my findings.
+
 ### Why Hexagonal Architecture?
 
 By implementing hexagonal architecture basic API functionality could easily be divided into _adapter_,_application_,_core_ layers. By doing so we could abstract each layer from another using interfaces like contracts. Since protobuf messages structures should not be sent directly to the database _model_ approach has been used to transform and manipulate data and vice a versa.
 
 ### Why MongoDB?
 
-First of all great documentation. Since this is the first time I used MongoDB, documentation has huge effect on database selection. It is also NoSQL which makes it easy to generate data and play with it.
+First of all great documentation. Since this is the first time I used MongoDB, documentation has huge effect on database selection. It is also NoSQL which makes it easy to generate data and play with it. However I had problem about keeping `created_at` field immutable. Could relational db would be better, I will think about it.
 
 ### Why Kafka?
 
@@ -70,4 +74,4 @@ It would be nice if I had catch up to write integration tests.
 Server
 ![plot](resources/Screenshot%202023-03-22%20at%2009.18.25.png)
 Client
-![plot](resources/Screenshot%202023-03-22%20at%2009.14.25.png)
+![plot](resources/Screenshot%202023-03-22%20at%2009.19.07.png)

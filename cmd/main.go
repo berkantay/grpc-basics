@@ -11,8 +11,9 @@ import (
 	"github.com/berkantay/user-management-service/user"
 )
 
-func main() {
+var Version = "development"
 
+func main() {
 	file, err := os.OpenFile("user-management-service.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -20,7 +21,7 @@ func main() {
 	defer file.Close()
 
 	logger := log.New(file, "User Management Server Log | ", log.LstdFlags)
-
+	logger.Printf("User Management Service [%s]", Version)
 	database, err := database.NewStorage(
 		database.WithHost(os.Getenv("MONGO_URL")),
 		database.WithLogger(logger),

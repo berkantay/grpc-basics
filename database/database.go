@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/berkantay/user-management-service/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -231,6 +232,7 @@ func toUserBson(user *model.User) *bson.D {
 		bson.E{Key: "password", Value: user.Password},
 		bson.E{Key: "email", Value: user.Email},
 		bson.E{Key: "country", Value: user.Country},
+		bson.E{Key: "updated_at", Value: time.Now()},
 	}
 }
 
