@@ -16,7 +16,7 @@ COPY grpc grpc
 COPY user user
 COPY model model
 
-RUN go build -tags musl -ldflags="-X 'main.Version=v1.0.0'" -o user-management-service ./cmd
+RUN go build -tags musl -ldflags="-X 'main.Version=v1.0.0'" -o user-management-service cmd/user-management-service/main.go
 
 FROM alpine:3.14
 

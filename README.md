@@ -57,6 +57,10 @@ Logs do not include user information because of the security concern.
 
 ## Improvements
 
+### Security
+
+Authorization could be implemented for secure communication.
+
 ### Scaling
 
 From vertical scaling perspective increasing the machine specs would help which application is running. From the horizontal perspective a task queue which filled by client request and workers listening on that queue would help us on making concurrent jobs in the application.
@@ -74,4 +78,4 @@ It would be nice if I had catch up to write integration tests.
 Server
 ![plot](resources/Screenshot%202023-03-22%20at%2009.18.25.png)
 Client
-![plot](resources/Screenshot%202023-03-22%20at%2009.19.07.png)
+![plot](resources/Screenshot 2023-03-22 at 09.19.07.png)
