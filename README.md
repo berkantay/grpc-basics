@@ -73,7 +73,7 @@ An automated CI/CD pipeline to run tests and deployment could be added. After de
 
 It would be nice if I had catch up to write integration tests.
 
-## Screemshot
+## Screenshot
 
 Server
 ![plot](resources/Screenshot%202023-03-22%20at%2009.18.25.png)
